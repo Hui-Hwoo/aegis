@@ -34,6 +34,7 @@ from policy import PolicyRule, glob_to_regexp
 
 MODEL = os.environ.get("AEGIS_MODEL", "claude-3-5-haiku-20241022")
 API_KEY = os.environ.get("ANTHROPIC_API_KEY", "").strip()
+WORKSPACE_ID = os.environ.get("ANTHROPIC_WORKSPACE_ID", "").strip()
 
 SYSTEM = """You are the Aegis analyst, a READ-ONLY assistant for the operator of a
 governed agent harness. You receive recent audit events, pending approval
@@ -114,12 +115,16 @@ def _call_llm(system: str, user: str, max_tokens: int = 900) -> str | None:
             "system": system,
             "messages": [{"role": "user", "content": user}]}
     try:
+        headers = {"x-api-key": API_KEY,
+                   "anthropic-version": "2023-06-01",
+                   "content-type": "application/json"}
+        # some keys (e.g. user-scoped sk-ant-usr-*) are not bound to a
+        # workspace and require this header; harmless to send otherwise.
+        if WORKSPACE_ID:
+            headers["anthropic-workspace-id"] = WORKSPACE_ID
         req = urllib.request.Request(
             "https://api.anthropic.com/v1/messages",
-            data=json.dumps(body).encode(),
-            headers={"x-api-key": API_KEY,
-                     "anthropic-version": "2023-06-01",
-                     "content-type": "application/json"})
+            data=json.dumps(body).encode(), headers=headers)
         with urllib.request.urlopen(req, timeout=30) as r:
             data = json.load(r)
         return "".join(b.get("text", "") for b in data.get("content", [])
