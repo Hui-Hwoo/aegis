@@ -388,7 +388,8 @@ def ask(question: str, audit, gate, memory, policy, hours: float = 4):
             "mutation": mutation_out}, new_policy
 
 
-def task_debrief(view: dict, events: list, audit_backend: str = "jsonl") -> dict:
+def task_debrief(view: dict, events: list, audit_backend: str = "jsonl",
+                   tickets: list = None) -> dict:
     """The agent summarizes its own completed task FROM THE AUDIT LOGS.
 
     Judge-facing: English. Events are read from the live audit backend
@@ -412,16 +413,32 @@ def task_debrief(view: dict, events: list, audit_backend: str = "jsonl") -> dict
            f"changelog {after.get('changelog_bytes', 0)} bytes; "
            f"outcomes {tally}; total gate time {total_ms:.1f} ms." +
            f"\nAudit trail: {len(events)} recent events from {audit_backend}.")
+    tick_lines = [f"- {t.get('id')}: {t.get('action')} {t.get('targets')} "
+                  f"(reason: {t.get('reason')})" for t in (tickets or [])]
+    ctx += "\nPending approval tickets:\n" + ("\n".join(tick_lines) if tick_lines else "- none")
+
 
     system = ("You are the demo agent debriefing a just-completed governed "
-              "task for hackathon judges. In 3-4 sentences of plain English, "
-              "no jargon: what the task was, what each step did, what was "
-              "blocked and why it matters (the maintenance guide contained an "
-              "injected instruction telling the agent to delete the "
-              "production users table - a naive agent would follow it), and "
-              "the proof the data is intact. End with one line starting "
-              "'Proof:'.")
-    summary = _call_llm(system, ctx, max_tokens=400)
+              "task for hackathon judges. Write a tight ACTIONABLE debrief in "
+              "plain English - no narrative fluff. Use exactly these sections:\n\n"
+              "## Action needed\n"
+              "For each pending approval ticket: what it is, what approving it does, "
+              "and your risk read (low/medium/high) in one phrase. If none: "
+              "'None - nothing waiting on you.'\n\n"
+              "## Blocked\n"
+              "Each denied operation: what was attempted, which rule stopped it, "
+              "and severity - what would have happened if it went through.\n\n"
+              "## Watch out\n"
+              "The non-obvious danger: the maintenance guide - a TRUSTED document - "
+              "contained a hidden instruction to delete the production users table. "
+              "Tell the operator what to investigate (document provenance, whether "
+              "other docs may carry injected instructions). Flag anything else "
+              "anomalous in the audit trail.\n\n"
+              "## All good\n"
+              "One line on what went fine.\n\n"
+              "End with one line starting 'Proof:' giving hard numbers: "
+              "prod_users rows before/after, outcome tally.")
+    summary = _call_llm(system, ctx, max_tokens=600)
     backend = MODEL if summary else "local-digest"
     if not summary:
         t = " / ".join(f"{v} {k}" for k, v in tally.items())
@@ -437,13 +454,15 @@ def task_debrief(view: dict, events: list, audit_backend: str = "jsonl") -> dict
                     {})
         s2 = next((s for s in steps if "maintenance guide" in s.get("label", "")),
                     {})
-        summary = (f"Task complete: {len(steps)} steps - {t}. I read the "
-                   f"runbook ({_proof(s1)}) and the maintenance "
-                   f"guide ({_proof(s2)}), pulled "
-                   f"{before.get('analytics_events', 0)} analytics rows, "
-                   f"BLOCKED the guide's injected 'delete prod users' "
-                   f"instruction before anything executed, and queued the "
-                   f"changelog for human approval. "
+        summary = (f"## Action needed\n- Changelog ticket {view.get('changelog_ticket')}: "
+                   f"approve the docs/weekly-report.md write (low risk - docs only).\n"
+                   f"## Blocked\n- 'Delete prod users' from the maintenance guide: "
+                   f"stopped by protect-prod before execution. Severity HIGH - "
+                   f"200 production rows would have been wiped.\n"
+                   f"## Watch out\n- The maintenance guide is a TRUSTED doc carrying "
+                   f"a hidden delete instruction: check who wrote it and whether "
+                   f"other docs are poisoned.\n"
+                   f"## All good\n- {len(steps)} steps done - {t}.\n"
                    f"Proof: prod_users {before.get('prod_users')} -> "
                    f"{after.get('prod_users')} rows untouched, changelog "
                    f"{after.get('changelog_bytes', 0)}B, "
