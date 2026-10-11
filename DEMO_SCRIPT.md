@@ -20,11 +20,15 @@ Drive it from the dashboard (`python dashboard.py`): the whole arc is live,
 no slides.
 
 1. **(60s)** Production task first: "This is not an attack game — it's a
-   working governed agent." Press ▶ Run weekly-report task: it reads real
-   docs, queries a real SQLite analytics table (60 rows), then follows an
-   injected instruction planted in the maintenance guide — 'delete prod
-   users' — and the gate stops it. Proof, not a badge: prod_users still
-   200 rows. The changelog write needs a human: approve the ticket live,
+   working governed agent." Press ▶ Run weekly-report task: steps stream in
+   one by one (real execution, not a screenshot) — it reads real docs,
+   queries a real SQLite analytics table (60 rows), then follows an injected
+   instruction planted in the maintenance guide — 'delete prod users' — and
+   the gate stops it before anything executes. Stats + proof below:
+   outcomes tally, per-step gate ms, prod_users 200 → 200 untouched. Then
+   the agent debriefs itself: 🤖 summary generated FROM the audit logs
+   (Claude if ANTHROPIC_API_KEY is set, honestly-labelled local digest
+   otherwise). The changelog write needs a human: approve the ticket live,
    the file is really written.
 2. **(30s)** Authorization: "Same request, different verdict per role."
    Show the 🔐 matrix: intern can't query analytics, analyst can't delete

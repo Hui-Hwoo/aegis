@@ -23,7 +23,21 @@ held-out probe caught a path-traversal hole). Live: 5/5 attacks blocked, 0 escap
 poisoned-memory attack. An AI analyst ("Ask Aegis") answers natural-language
 questions over the audit log and turns operator intent ("auto-reject prod
 deletes from now on") into policy proposals — still gated by the fixed
-evaluator, read-only by construction.
+evaluator, read-only by construction. After each production task the agent
+debriefs itself from the audit logs: the task streams step-by-step with
+per-step gate latency and an outcomes tally (no mock data — every step
+really executes), then an LLM (Claude via ANTHROPIC_API_KEY, or an
+honestly-labelled local digest without a key) summarizes what ran, what was
+blocked, and the proof — reading the same Atlas audit collection the judges
+can inspect live.
+
+Solidity: 17 deterministic unit tests (deny-wins, default-deny, smuggled
+targets, approval executes the real call, traversal guard, 3x3 role matrix,
+evaluator baselines, mutation adopt/rollback, analyst intent parsing);
+an observe mode that logs WOULD_DENY without blocking, for dry-running new
+policies against live traffic; three held-out probes (including a reversed
+smuggled-target probe); and a real per-step gate-latency readout in the
+dashboard.
 
 ## 2. Public GitHub Repository
 

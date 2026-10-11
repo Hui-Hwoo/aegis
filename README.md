@@ -112,7 +112,7 @@ No code changes needed — backends are selected by environment.
 | `analyst.py` | "Ask Aegis": LLM analyst over the audit log (read-only; proposals gated by the fixed evaluator) |
 | `evolve.py` | Policy self-evolution: mine audit → propose mutations → fixed-evaluator gating → adopt/rollback |
 | `evaluator.py` | **Fixed** evaluation suite (attacks / legit / held-out probes) — the harness cannot edit this |
-| `dashboard.py` | Live demo UI: production task, attack console, role matrix, approval queue, audit log, memory, Ask Aegis |
+| `dashboard.py` | Live demo UI: production task (step-by-step streaming, stats, agent debrief from audit logs), attack console, role matrix, approval queue, audit log, memory, Ask Aegis |
 | `demo.py` | 4-act scripted demo with hard metrics (+ Act 5 self-evolution) |
 | `policy.example.json` | Demo-domain policy (intern/analyst/admin roles, docs/db/email/memory resources) |
 | `docs/architecture.svg` | System flowchart (embedded above) |
