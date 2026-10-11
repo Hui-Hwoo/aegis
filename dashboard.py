@@ -283,7 +283,7 @@ footer{color:var(--muted);font-size:.78rem;text-align:center;padding:0 1rem 1.5r
 </div>
 </section>
 <section class="tabpane" id="pane-ai">
-<div class="card"><h3>🤖 Agent debrief <span class="muted" style="font-weight:400;font-size:.8rem">AI summary of the run — from live audit events</span></h3><div id="debrief"><span class="muted">— run the task in 🛡️ Interception, then debrief lands here —</span></div></div>
+<div class="card"><h3>🤖 Agent debrief <span class="muted" style="font-weight:400;font-size:.8rem">AI summary of the run — from live audit events</span></h3><div id="debrief"><span class="muted">— run the task in 🛡️ Interception; the debrief will appear here automatically —</span></div></div>
 <div class="card"><h3>🤖 Ask Aegis <span class="muted" style="font-weight:400;font-size:.8rem">AI analyst over the audit log — read-only; proposals still pass the fixed evaluator</span></h3>
 <div style="margin-bottom:.6rem">
 <button class="btn" onclick="quickAsk('Summarize the last hour')">Summarize last hour</button>
@@ -388,6 +388,7 @@ function appendStep(s){
   if(tb) tb.insertAdjacentHTML('beforeend',taskRow(s));
 }
 async function debrief(){
+  showTab('pane-ai');
   const box=document.getElementById('debrief');
   box.innerHTML='<span class="muted">✍️ agent writing debrief from the audit logs…</span>';
   try{
