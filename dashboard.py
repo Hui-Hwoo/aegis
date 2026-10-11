@@ -148,6 +148,18 @@ code{font-family:ui-monospace,monospace;font-size:.8rem}
 .mut.no{border-color:#f8514977;background:#f8514912}
 #logwrap{max-height:380px;overflow:auto}
 footer{color:var(--muted);font-size:.78rem;text-align:center;padding:0 1rem 1.5rem}
+nav.tabs{position:sticky;top:0;z-index:50;background:#0d1117f2;border-bottom:1px solid var(--border);padding:.55rem 1.2rem;display:flex;gap:.4rem;flex-wrap:wrap}
+nav.tabs button{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:.45rem .95rem;font-size:.88rem;cursor:pointer}
+nav.tabs button:hover{color:var(--fg);border-color:var(--blue)}
+nav.tabs button.active{background:#1f6feb33;border-color:var(--blue);color:var(--fg);font-weight:600}
+.layout{max-width:1460px;margin:0 auto;padding:1rem 1.2rem 2rem;display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:1rem;align-items:start}
+.layout main{max-width:none;margin:0;padding:0;display:block;min-width:0}
+.tabpane{display:none}
+.tabpane.active{display:block;animation:fadein .18s}
+@keyframes fadein{from{opacity:.4}to{opacity:1}}
+.tabpane .card{margin-bottom:1rem}
+aside .card{position:sticky;top:70px}
+@media(max-width:1020px){.layout{grid-template-columns:1fr}aside .card{position:static}}
 </style></head><body>
 <header>
 <h1>🛡️ Aegis</h1><span class="sub">governed memory harness · live demo<br>__BACKENDS__ · session <span id="sess">…</span></span>
@@ -159,7 +171,16 @@ footer{color:var(--muted);font-size:.78rem;text-align:center;padding:0 1rem 1.5r
 <div class="stat"><b id="st-mem" style="color:var(--purple)">0</b><span>memories</span></div>
 </div>
 </header>
-<main>
+<nav class="tabs">
+<button class="active" data-tab="pane-task" onclick="showTab('pane-task')">🏭 Production task</button>
+<button data-tab="pane-roles" onclick="showTab('pane-roles')">🔐 Authorization</button>
+<button data-tab="pane-redteam" onclick="showTab('pane-redteam')">⚔️ Red team</button>
+<button data-tab="pane-evolve" onclick="showTab('pane-evolve')">🧬 Evolution</button>
+<button data-tab="pane-ask" onclick="showTab('pane-ask')">🤖 Ask Aegis</button>
+<button data-tab="pane-audit" onclick="showTab('pane-audit')">📜 Audit log</button>
+</nav>
+<div class="layout"><main>
+<section class="tabpane active" id="pane-task">
 <div class="card span2"><h3>🏭 Production task <span class="muted" style="font-weight:400;font-size:.8rem">weekly report — real files, real SQLite, real gate</span></h3>
 <p><button class="btn big" onclick="runTask(false)">▶ Run weekly-report task</button>
 <button class="btn big" onclick="runTask(true)">🧠 Run with AI planner</button>
@@ -169,6 +190,8 @@ footer{color:var(--muted);font-size:.78rem;text-align:center;padding:0 1rem 1.5r
 <div id="taskproof" class="muted" style="font-size:.85rem;margin-top:.5rem"></div>
 <div id="debrief"></div>
 </div>
+</section>
+<section class="tabpane" id="pane-roles">
 <div class="card span2"><h3>🔐 Agent authorization <span class="muted" style="font-weight:400;font-size:.8rem">same request, different verdict per role</span></h3>
 <p id="rolepills">
 <button class="btn" data-role="intern" onclick="setRole('intern')">intern</button>
@@ -178,19 +201,14 @@ footer{color:var(--muted);font-size:.78rem;text-align:center;padding:0 1rem 1.5r
 </p>
 <table id="matrix"></table>
 </div>
+</section>
+<section class="tabpane" id="pane-redteam">
 <div class="card">
-<h3>⚔️ Attack console <span class="muted" style="font-weight:400;font-size:.8rem">red-team the same system</span></h3>
+<h3>⚔️ Attack console <span class="muted" style="font-weight:400;font-size:.8rem">red-team the same system — tickets land in the approval queue →</span></h3>
 <div id="banner"></div>
 <div id="btns"></div>
-<p style="margin-top:.8rem">
-<button class="btn big" onclick="learn()">🧠 Distill episode → RSI</button>
-<button class="btn big" onclick="evolve()">🧬 Evolve policy (self-rewriting rules)</button>
-<label style="font-size:.82rem;color:var(--muted);margin-left:.6rem"><input type="checkbox" id="autopilot" checked> auto-evolve after distill</label>
-<label style="font-size:.82rem;color:var(--muted);margin-left:.6rem" title="Dry-run: would-deny is logged but allowed through"><input type="checkbox" id="observemode" onchange="setMode(this.checked?'observe':'enforce')"> observe mode (dry-run)</label>
-</p>
 </div>
-<div>
-<div class="card" style="margin-bottom:1rem">
+<div class="card">
 <h3>📋 Guided demo <span class="muted" style="font-weight:400;font-size:.8rem">— follow the steps</span></h3>
 <div id="steps">
 <div class="step" id="step1"><div class="box">1</div><div>Block 2 attacks<span class="hint"></span></div></div>
@@ -201,11 +219,24 @@ footer{color:var(--muted);font-size:.78rem;text-align:center;padding:0 1rem 1.5r
 <div class="step" id="step6"><div class="box">6</div><div>Ask the AI analyst<span class="hint"></span></div></div>
 </div>
 </div>
-<div class="card" id="tickets"><h3>⏳ Approval queue</h3><div id="ticketlist"><span class="muted">— empty: click “🟡 Write notes” to create a ticket —</span></div></div>
-</div>
-<div class="card span2"><h3>📜 Audit log <span class="muted" style="font-weight:400;font-size:.8rem">append-only → Atlas · newest first</span></h3>
+</section>
+<section class="tabpane" id="pane-evolve">
+<div class="card"><h3>🧬 Self-evolution controls</h3>
+<p>
+<button class="btn big" onclick="learn()">🧠 Distill episode → memory</button>
+<button class="btn big" onclick="evolve()">🧬 Evolve policy (self-rewriting rules)</button>
+<label style="font-size:.82rem;color:var(--muted);margin-left:.6rem"><input type="checkbox" id="autopilot" checked> auto-evolve after distill</label>
+<label style="font-size:.82rem;color:var(--muted);margin-left:.6rem" title="Dry-run: would-deny is logged but allowed through"><input type="checkbox" id="observemode" onchange="setMode(this.checked?'observe':'enforce')"> observe mode (dry-run)</label>
+</p></div>
+<div class="card"><h3>🧠 Memory <span class="muted" style="font-weight:400;font-size:.8rem">governed episodic + procedural</span></h3><div id="mem"></div></div>
+<div class="card"><h3>🧬 Policy self-evolution <span class="muted" style="font-weight:400;font-size:.8rem">fixed evaluator — frozen at startup</span></h3><div id="evol"><span class="muted">— press “🧬 Evolve policy” —</span></div></div>
+</section>
+<section class="tabpane" id="pane-audit">
+<div class="card"><h3>📜 Audit log <span class="muted" style="font-weight:400;font-size:.8rem">append-only → Atlas · newest first</span></h3>
 <div id="logwrap"><table id="auditt"></table></div></div>
-<div class="card span2"><h3>🤖 Ask Aegis <span class="muted" style="font-weight:400;font-size:.8rem">AI analyst over the audit log — read-only; proposals still pass the fixed evaluator</span></h3>
+</section>
+<section class="tabpane" id="pane-ask">
+<div class="card"><h3>🤖 Ask Aegis <span class="muted" style="font-weight:400;font-size:.8rem">AI analyst over the audit log — read-only; proposals still pass the fixed evaluator</span></h3>
 <div style="margin-bottom:.6rem">
 <button class="btn" onclick="quickAsk('总结最近1小时的情况')">总结最近1小时</button>
 <button class="btn" onclick="quickAsk('哪些请求需要我判断？')">哪些需要我判断？</button>
@@ -215,9 +246,12 @@ footer{color:var(--muted);font-size:.78rem;text-align:center;padding:0 1rem 1.5r
 <p><input id="q" placeholder="问：最近有什么异常？ / 以后……都拒绝" style="width:68%;padding:.55rem;border-radius:8px;border:1px solid var(--border);background:#0d1117;color:var(--fg)">
 <button class="btn big" onclick="ask()">Ask</button> <span class="muted" id="askbackend" style="font-size:.78rem"></span></p>
 <div id="aout"></div></div>
-<div class="card"><h3>🧠 Memory</h3><div id="mem"></div></div>
-<div class="card"><h3>🧬 Policy self-evolution</h3><div id="evol"><span class="muted">— press “Evolve policy” —</span></div></div>
+</section>
 </main>
+<aside>
+<div class="card" id="tickets"><h3>⏳ Approval queue <span class="muted" style="font-weight:400;font-size:.8rem">always visible</span></h3><div id="ticketlist"><span class="muted">— empty: click “🟡 Write notes” to create a ticket —</span></div></div>
+</aside>
+</div>
 <footer>every tool call → policy gate → audit · memory reads/writes are governed too · the fixed evaluator cannot be edited by the harness</footer>
 <script>
 const SCEN=__SCENARIOS__;
@@ -438,6 +472,10 @@ function refresh(){
       '<p>'+Object.entries(counts).map(([k,v])=>`<b>${k}</b>: ${v}`).join(' · ')+'</p>'+
       m.slice(0,8).map(d=>`<p><small class="muted">[${d.kind}]</small> ${(d.text||'').slice(0,130)}</p>`).join('');
   });
+}
+function showTab(id){
+  document.querySelectorAll('.tabpane').forEach(p=>p.classList.toggle('active',p.id===id));
+  document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));
 }
 renderBtns(); renderMatrix(); setInterval(refresh,2000); refresh();
 </script></body></html>"""

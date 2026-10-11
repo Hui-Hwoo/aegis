@@ -28,7 +28,10 @@ Record on-site Oct 11. Must show ONLY what was built during the hackathon
 
 
 Drive it from the dashboard (`python dashboard.py`): the whole arc is live,
-no slides.
+no slides. The UI is tabbed — follow the tabs left to right, it IS the demo
+script: 🏭 Production task → 🔐 Authorization → ⚔️ Red team → 🧬 Evolution →
+🤖 Ask Aegis → 📜 Audit log. The ⏳ Approval queue stays visible on the right
+in every tab.
 
 1. **(60s)** Production task first: "This is not an attack game — it's a
    working governed agent." Press ▶ Run weekly-report task: steps stream in
