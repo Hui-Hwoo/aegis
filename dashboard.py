@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import os
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse
 
@@ -31,7 +32,8 @@ with open(os.path.join(HERE, "policy.example.json"), encoding="utf-8") as f:
 audit = AuditLog(os.path.join(HERE, "demo-audit.jsonl"))
 memory = MemoryStore(audit=audit,
                      backend=os.environ.get("AEGIS_MEMORY_BACKEND", "auto"))
-state = {"policy": _policy0, "learned": False, "role": "analyst", "task": {}}
+state = {"policy": _policy0, "learned": False, "role": "analyst",
+         "task": {}, "mode": "enforce"}
 gate = Gate(state["policy"], audit=audit)
 agent = ScriptedAgent("demo-agent", ["analyst"], gate, memory, task_id="live")
 
@@ -81,6 +83,7 @@ main{max-width:1280px;margin:0 auto;padding:1rem 1.2rem 2rem;display:grid;grid-t
 #banner.ALLOW{border-color:var(--green);background:#3fb9501a}
 #banner.REQUIRE_APPROVAL{border-color:var(--amber);background:#d299221a}
 #banner.SKIPPED_LEARNED{border-color:var(--purple);background:#bc8cff1a}
+#banner.WOULD_DENY{border-color:var(--purple);background:#bc8cff1a;border-style:dashed}
 .grp{margin-bottom:.55rem}
 .grp-label{font-size:.78rem;color:var(--muted);margin-bottom:.25rem}
 .btn{display:inline-block;margin:.22rem;padding:.55rem .85rem;border-radius:8px;border:1px solid var(--border);
@@ -155,6 +158,7 @@ footer{color:var(--muted);font-size:.78rem;text-align:center;padding:0 1rem 1.5r
 <button class="btn big" onclick="learn()">🧠 Distill episode → RSI</button>
 <button class="btn big" onclick="evolve()">🧬 Evolve policy (self-rewriting rules)</button>
 <label style="font-size:.82rem;color:var(--muted);margin-left:.6rem"><input type="checkbox" id="autopilot" checked> auto-evolve after distill</label>
+<label style="font-size:.82rem;color:var(--muted);margin-left:.6rem" title="Dry-run: would-deny is logged but allowed through"><input type="checkbox" id="observemode" onchange="setMode(this.checked?'observe':'enforce')"> observe mode (dry-run)</label>
 </p>
 </div>
 <div>
@@ -211,6 +215,7 @@ async function attempt(i){
     extra=`<br>👆 ticket <b>${r.ticket_id}</b> created — approve it in the <b>Approval queue</b> →`;
   if(r.outcome==='SKIPPED_LEARNED')
     extra=`<br>🧠 memory said: this fails — skipped before hitting the gate`;
+  if(r.gate_ms!=null) extra+=`<br><small>gate decision: ${r.gate_ms} ms</small>`;
   showBanner(r.outcome,r.detail,extra);
   refresh();
 }
@@ -249,6 +254,14 @@ async function resetSandbox(){
   await fetch('/api/reset_sandbox',{method:'POST'});
   renderTask(null);
   document.getElementById('tasksummary').textContent='';
+  refresh();
+}
+async function setMode(mode){
+  await fetch('/api/mode',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({mode})}).then(r=>r.json());
+  showBanner(mode==='observe'?'WOULD_DENY':'ALLOW',
+    mode==='observe'?'observe mode: denies are logged as WOULD_DENY but let through — validate policy against live traffic before enforcing'
+                    :'enforce mode: denies block');
   refresh();
 }
 async function setRole(role){
@@ -481,6 +494,7 @@ class Handler(BaseHTTPRequestHandler):
             idx = int(path.rsplit("/", 1)[-1])
             action, targets, _label, _kind = SCENARIOS[idx]
             poisoned = False
+            t0 = time.perf_counter()
             if action == "__poison__":
                 poisoned = True
                 memory.save_episode(
@@ -493,9 +507,10 @@ class Handler(BaseHTTPRequestHandler):
                 r.detail = "poisoned memory said 'skip approval' — " + r.detail
             else:
                 r = agent.plan(action, targets, learned=state["learned"])
+            ms = (time.perf_counter() - t0) * 1000
             self._json({"outcome": r.outcome, "detail": r.detail,
                         "ticket_id": getattr(r, "ticket_id", None),
-                        "poisoned": poisoned})
+                        "poisoned": poisoned, "gate_ms": round(ms, 2)})
         elif path == "/api/learn":
             n = distill_episode(memory, agent, episode=1)
             state["learned"] = True
@@ -520,6 +535,7 @@ class Handler(BaseHTTPRequestHandler):
                 if adopted:
                     state["policy"] = new_policy
                     gate.policy = new_policy
+                    new_policy.mode = state.get("mode", "enforce")
                 out.append({"description": m["description"],
                             "benefit": m["benefit"],
                             "adopted": adopted,
@@ -543,6 +559,16 @@ class Handler(BaseHTTPRequestHandler):
                 task["complete"] = True
                 task["after"] = sandbox_state()
             self._json({"ok": True, "executed": exec_out})
+        elif path == "/api/mode":
+            length = int(self.headers.get("Content-Length", 0) or 0)
+            payload = json.loads(self.rfile.read(length) or b"{}")
+            mode = payload.get("mode", "enforce")
+            if mode not in ("enforce", "observe"):
+                self._json({"error": "unknown mode"}, 400)
+            else:
+                state["mode"] = mode
+                state["policy"].mode = mode
+                self._json({"ok": True, "mode": mode})
         elif path == "/api/run_task":
             self._json(_run_production_task())
         elif path == "/api/role":

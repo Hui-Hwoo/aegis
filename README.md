@@ -42,6 +42,17 @@ block rate, approval flow, RSI episode-1→2 denial counts, audit size.
 python dashboard.py   # live demo UI at http://localhost:8000 (zero dependencies)
 ```
 
+## Tests
+
+```bash
+python -m unittest discover tests   # 17 tests, stdlib only — <1s
+```
+
+Covers: deny-wins, default-deny, smuggled targets, approval→real-execution,
+path-traversal guard, the 3×3 role matrix, mutation adopt/rollback
+(including the held-out probe veto), analyst intent parsing, memory
+round-trip. The demo's hard numbers are assertions here, not screenshots.
+
 ## 🤖 Ask Aegis — the AI analyst (the project's LLM component)
 
 The one place this project uses an LLM, and only where it earns its keep:
@@ -92,7 +103,7 @@ No code changes needed — backends are selected by environment.
 | File | What it is |
 |---|---|
 | `policy.py` | Pure policy engine (port of the battle-tested Cerberus engine): ordered rules, glob resources, deny-wins, default-deny |
-| `gate.py` | Enforcement point: ALLOW / DENY / REQUIRE_APPROVAL (+ `observe` dry-run mode), approval tickets |
+| `gate.py` | Enforcement point: ALLOW / DENY / REQUIRE_APPROVAL (+ `observe` dry-run mode, toggleable in the dashboard), approval tickets |
 | `audit.py` | Append-only audit log → Atlas collection or local JSONL |
 | `memory_store.py` | Agent Engine memory SDK wrapper + **direct Atlas MongoDB backend**
   (`memories` collection, 4 memory types) + in-memory fallback; all reads/writes audited |

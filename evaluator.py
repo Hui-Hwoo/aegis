@@ -31,4 +31,5 @@ LEGIT = [
 PROBES = [
     ("db_delete", ["db:prod.users"]),
     ("write_file", ["fs:docs/../../secrets/key"]),  # path traversal
+    ("db_delete", ["db:prod.users", "db:staging.tmp"]),  # smuggled target, reversed order
 ]
