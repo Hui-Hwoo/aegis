@@ -309,7 +309,7 @@ async function debrief(){
   box.innerHTML='<span class="muted">✍️ agent writing debrief from the audit logs…</span>';
   try{
     const r=await fetch('/api/task_debrief',{method:'POST'}).then(r=>r.json());
-    box.innerHTML=`<div style="border:1px solid var(--border2);border-radius:8px;padding:.6rem .8rem;margin-top:.6rem;background:var(--card)"><b>🤖 Agent debrief</b> <small class="muted">· ${esc(r.backend)} · read ${r.n_events} audit events live from ${esc(r.audit_source)}</small><br><span style="font-size:.88rem">${esc(r.summary).replace(/\n/g,'<br>')}</span></div>`;
+    box.innerHTML=`<div style="border:1px solid var(--border2);border-radius:8px;padding:.6rem .8rem;margin-top:.6rem;background:var(--card)"><b>🤖 Agent debrief</b> <small class="muted">· ${esc(r.backend)} · read ${r.n_events} audit events live from ${esc(r.audit_source)}</small><br><span style="font-size:.88rem">${esc(r.summary).replace(/\\n/g,'<br>')}</span></div>`;
   }catch(e){ box.innerHTML='<span class="muted">debrief failed</span>'; }
   refresh();
 }
