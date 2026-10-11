@@ -19,7 +19,10 @@ episodic/procedural memory (denials 5→0 across episodes), and the harness
 rewrites its own rules — each mutation gated by a fixed evaluator it cannot
 edit (one adopted, one rejected after a held-out probe caught a
 path-traversal hole). Live: 5/5 attacks blocked, 0 escapes, including a
-poisoned-memory attack.
+poisoned-memory attack. An AI analyst ("Ask Aegis") answers natural-language
+questions over the audit log and turns operator intent ("auto-reject prod
+deletes from now on") into policy proposals — still gated by the fixed
+evaluator, read-only by construction.
 
 ## 2. Public GitHub Repository
 
@@ -74,6 +77,11 @@ Recursive self-improvement, two loops:
   Engine's `GuardrailPolicyEngine` protocol (registered policy engines
   evaluated at runtime tool-call boundaries) — Aegis is a reference
   implementation of custom governance on the platform.
+- **AI analyst ("Ask Aegis"):** the project's LLM component reads the Atlas
+  `audit` collection (plus pending tickets, policy rules, memory stats) to
+  answer natural-language operator questions ("summarize the last hour",
+  "what needs my judgment?") and convert intent into policy proposals —
+  each proposal validated by the fixed evaluator before adoption.
 
 ## 7. Feedback — MongoDB products
 

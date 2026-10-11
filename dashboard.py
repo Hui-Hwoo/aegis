@@ -15,6 +15,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse
 
 from agent import ScriptedAgent, distill_episode
+from analyst import ask as analyst_ask
 from audit import AuditLog
 from evolve import analyze, propose, try_adopt
 from gate import Gate
@@ -144,19 +145,31 @@ footer{color:var(--muted);font-size:.78rem;text-align:center;padding:0 1rem 1.5r
 <div class="step" id="step3"><div class="box">3</div><div>Trigger an approval → approve it<span class="hint"></span></div></div>
 <div class="step" id="step4"><div class="box">4</div><div>Distill the episode (RSI)<span class="hint"></span></div></div>
 <div class="step" id="step5"><div class="box">5</div><div>Evolve the policy — watch it reject its own bad idea<span class="hint"></span></div></div>
+<div class="step" id="step6"><div class="box">6</div><div>Ask the AI analyst<span class="hint"></span></div></div>
 </div>
 </div>
 <div class="card" id="tickets"><h3>⏳ Approval queue</h3><div id="ticketlist"><span class="muted">— empty: click “🟡 Update docs” to create a ticket —</span></div></div>
 </div>
 <div class="card span2"><h3>📜 Audit log <span class="muted" style="font-weight:400;font-size:.8rem">append-only → Atlas · newest first</span></h3>
 <div id="logwrap"><table id="auditt"></table></div></div>
+<div class="card span2"><h3>🤖 Ask Aegis <span class="muted" style="font-weight:400;font-size:.8rem">AI analyst over the audit log — read-only; proposals still pass the fixed evaluator</span></h3>
+<div style="margin-bottom:.6rem">
+<button class="btn" onclick="quickAsk('总结最近1小时的情况')">总结最近1小时</button>
+<button class="btn" onclick="quickAsk('哪些请求需要我判断？')">哪些需要我判断？</button>
+<button class="btn" onclick="quickAsk('以后删除 prod 数据的请求都自动拒绝')">以后删除 prod 数据都自动拒绝</button>
+<button class="btn" onclick="quickAsk('以后 docs 的写入都自动批准，不用再问我')">docs 写入自动批准</button>
+</div>
+<p><input id="q" placeholder="问：最近有什么异常？ / 以后……都拒绝" style="width:68%;padding:.55rem;border-radius:8px;border:1px solid var(--border);background:#0d1117;color:var(--fg)">
+<button class="btn big" onclick="ask()">Ask</button> <span class="muted" id="askbackend" style="font-size:.78rem"></span></p>
+<div id="aout"></div></div>
 <div class="card"><h3>🧠 Memory</h3><div id="mem"></div></div>
 <div class="card"><h3>🧬 Policy self-evolution</h3><div id="evol"><span class="muted">— press “Evolve policy” —</span></div></div>
 </main>
 <footer>every tool call → policy gate → audit · memory reads/writes are governed too · the fixed evaluator cannot be edited by the harness</footer>
 <script>
 const SCEN=__SCENARIOS__;
-let learned=false, evolved=false, poisoned=false;
+let learned=false, evolved=false, poisoned=false, asked=false;
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 const GROUPS=[["attack","Attacks"],["approval","Needs human approval"],["allow","Legitimate"],["poison","Adversarial memory"]];
 function renderBtns(){
   document.getElementById('btns').innerHTML = GROUPS.map(([k,label])=>
@@ -182,6 +195,23 @@ async function attempt(i){
 }
 async function decide(id,how){
   await fetch(`/api/tickets/${id}/${how}`,{method:'POST'});
+  refresh();
+}
+async function quickAsk(q){document.getElementById('q').value=q;ask();}
+async function ask(){
+  const q=document.getElementById('q').value.trim(); if(!q) return;
+  document.getElementById('aout').innerHTML='<span class="muted">thinking…</span>';
+  try{
+    const r=await fetch('/api/ask',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({question:q,hours:4})}).then(r=>r.json());
+    asked=true;
+    document.getElementById('askbackend').textContent='· answered by '+r.backend;
+    document.getElementById('aout').innerHTML=
+      `<div class="muted" style="white-space:pre-wrap;font-size:.9rem">${esc(r.answer)}</div>`+
+      (r.mutation?`<div class="mut ${r.mutation.adopted?'ok':'no'}" style="margin-top:.6rem"><b>${r.mutation.adopted?'✅ policy updated':'❌ proposal rejected by evaluator'}</b> — ${esc(r.mutation.description)}<br><small>block ${r.mutation.before.block_rate}→${r.mutation.after.block_rate} · probes ${r.mutation.before.probe_pass_rate}→${r.mutation.after.probe_pass_rate} · legit ${r.mutation.before.legit_ok_rate}→${r.mutation.after.legit_ok_rate}</small></div>`:'');
+  }catch(e){
+    document.getElementById('aout').innerHTML='<span class="muted">request failed: '+esc(String(e))+'</span>';
+  }
   refresh();
 }
 async function learn(){
@@ -233,6 +263,7 @@ function refresh(){
     setStep(3,approved,approved?'human approved the ticket':'click “🟡 Update docs”, then approve the ticket');
     setStep(4,learned,learned?'denials distilled into memory':'press 🧠 Distill');
     setStep(5,evolved,evolved?'see the Policy evolution panel':'press 🧬 Evolve policy');
+    setStep(6,asked,asked?'analyst answered':'ask it anything about the audit log');
     // tickets
     document.getElementById('tickets').classList.toggle('hot',t.length>0);
     document.getElementById('ticketlist').innerHTML = t.length ? t.map(x=>
@@ -320,6 +351,16 @@ class Handler(BaseHTTPRequestHandler):
             n = distill_episode(memory, agent, episode=1)
             state["learned"] = True
             self._json({"memories": n})
+        elif path == "/api/ask":
+            length = int(self.headers.get("Content-Length", 0) or 0)
+            payload = json.loads(self.rfile.read(length) or b"{}")
+            resp, new_policy = analyst_ask(
+                payload.get("question", ""), audit, gate, memory,
+                state["policy"], hours=float(payload.get("hours", 4)))
+            if new_policy is not None:
+                state["policy"] = new_policy
+                gate.policy = new_policy
+            self._json(resp)
         elif path == "/api/evolve":
             stats = analyze(audit.read_all(limit=10000),
                             list(gate.tickets.values()))

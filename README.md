@@ -48,6 +48,27 @@ block rate, approval flow, RSI episode-1→2 denial counts, audit size.
 python dashboard.py   # live demo UI at http://localhost:8000 (zero dependencies)
 ```
 
+## 🤖 Ask Aegis — the AI analyst (the project's LLM component)
+
+The one place this project uses an LLM, and only where it earns its keep:
+a human cannot read ten thousand audit rows. The analyst answers
+natural-language questions over the audit log and turns operator intent
+into policy — every proposal still gated by the fixed evaluator.
+
+```bash
+export ANTHROPIC_API_KEY=...   # optional; without it you get a deterministic
+                               # local digest (template summary + keyword intents)
+python dashboard.py            # open the "Ask Aegis" panel
+```
+
+Try: `总结最近1小时的情况` · `哪些请求需要我判断？` ·
+`以后删除 prod 数据的请求都自动拒绝` (adopted) ·
+`以后 docs 的写入都自动批准` (rejected by the evaluator — held-out
+path-traversal probe fails). The analyst is read-only by construction:
+it can never approve/deny anything itself, and untrusted memory content
+is labeled as data, never instructions (the poisoned-memory attack cannot
+launder itself through the analyst).
+
 ## Going live on Atlas (at the event)
 
 ```bash

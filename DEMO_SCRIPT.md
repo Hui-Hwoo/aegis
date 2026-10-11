@@ -27,6 +27,10 @@ watch decisions land, approve the ticket live when it pops up.
 4. **(45s)** Self-evolution: "It mines its audit log, proposes rule changes,
    and a fixed evaluator it cannot edit gates every change. It adopted one,
    rejected one — the rejection is the point."
+5. **(30s)** Ask Aegis (AI analyst): "Summarize the last hour." Then:
+   "Auto-reject prod deletes from now on" → adopted; "auto-approve docs
+   writes" → rejected by the evaluator. The LLM proposes, the evaluator
+   disposes — it can never approve anything itself.
 
 ### Likely Q&A
 
