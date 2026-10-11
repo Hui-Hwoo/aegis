@@ -150,15 +150,22 @@ code{font-family:ui-monospace,SFMono-Regular,monospace;font-size:.8rem;backgroun
 .step.done .box{background:var(--fg);border-color:var(--fg);color:var(--bg);font-weight:700}
 .step .hint{display:block;font-size:.78rem;color:var(--muted);margin-top:.15rem}
 footer{color:var(--muted);font-size:.78rem;text-align:center;padding:0 1rem 1.5rem}
-.flowchart{background:var(--bg);border-bottom:1px solid var(--border);padding:.7rem 1.2rem;display:flex;align-items:center;gap:.45rem;overflow-x:auto;font-size:.8rem}
-.fstep{border:1px solid var(--border2);border-radius:8px;padding:.4rem .7rem;text-align:center;white-space:nowrap;background:var(--card)}
-.fstep b{display:block;font-size:.82rem}
-.fstep small{color:var(--muted);font-size:.68rem}
-.fstep.gate{border-width:2px}
-.fstep.deny{background:var(--pill);color:var(--pillfg);border-color:var(--pill)}
-.farrow{color:var(--muted);font-size:1rem;flex-shrink:0}
-.floop{margin-left:auto;border:1px dashed var(--border2);border-radius:8px;padding:.4rem .7rem;white-space:nowrap;color:var(--muted);font-size:.76rem;flex-shrink:0}
-.floop b{color:var(--fg)}
+.flowcard{max-width:1060px;margin:0 auto;padding:1.1rem 1.2rem 0}
+.flowcard .card{margin-bottom:.9rem}
+.flowsvg{width:100%;height:auto;display:block}
+.flowsvg .fbox{fill:var(--card);stroke:var(--border2);stroke-width:1.5}
+.flowsvg .fbox.gate{stroke:var(--fg);stroke-width:2.5}
+.flowsvg .fbox.deny{fill:var(--pill);stroke:var(--pill)}
+.flowsvg .ftext{fill:var(--fg);font-size:13px;font-weight:600}
+.flowsvg .ftext.inv{fill:var(--pillfg)}
+.flowsvg .fsub{fill:var(--muted);font-size:10px}
+.flowsvg .farr{stroke:var(--muted);stroke-width:1.5;fill:none}
+.flowsvg .farrh{fill:var(--muted)}
+.flowsvg .floop{stroke:var(--fg);stroke-width:2;fill:none;stroke-dasharray:7 5}
+.flowsvg .floophead{fill:var(--fg)}
+.flowsvg .flooplabel{fill:var(--fg);font-size:10px;font-weight:600}
+.flowsvg .flabel{fill:var(--muted);font-size:10px;letter-spacing:2px;font-weight:600}
+.flowsvg .fbadge{fill:var(--hover);stroke:var(--border2);stroke-width:1}
 .cols2{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:1rem;align-items:start}
 @media(max-width:900px){.cols2{grid-template-columns:1fr}}
 .evoflow{display:flex;align-items:stretch;gap:.4rem;overflow-x:auto;padding:.2rem 0 .8rem;font-size:.8rem}
@@ -177,15 +184,57 @@ footer{color:var(--muted);font-size:.78rem;text-align:center;padding:0 1rem 1.5r
 </div>
 <button id="themebtn" onclick="toggleTheme()" title="toggle dark mode">🌙</button>
 </header>
-<div class="flowchart" title="every request flows through the gate; every verdict is audited; audit distills into memory; memory evolves policy">
-<div class="fstep"><b>request</b><small>tool call</small></div><div class="farrow">→</div>
-<div class="fstep gate"><b>policy gate</b><small>fixed evaluator</small></div><div class="farrow">→</div>
-<div class="fstep"><b>allow</b></div>
-<div class="fstep deny"><b>deny</b></div>
-<div class="fstep"><b>approval</b><small>human</small></div><div class="farrow">→</div>
-<div class="fstep"><b>audit log</b><small>append-only</small></div>
-<div class="floop" title="self-evolving loop">↺ <b>distill</b> → <b>memory</b> → <b>evolve</b> → policy</div>
+<div class="flowcard"><div class="card">
+<div style="display:flex;align-items:baseline;gap:.7rem;margin-bottom:.3rem;flex-wrap:wrap">
+<b style="font-size:1.02rem">System architecture</b>
+<span class="muted" style="font-size:.82rem">every request is governed &middot; the system rewrites its own policy under a frozen evaluator</span>
 </div>
+<svg viewBox="0 0 700 292" class="flowsvg" role="img" aria-label="Aegis architecture: request flows through the policy gate to allow, deny or human approval; every verdict is written to the audit log; the log distills into memory; memory evolves policy through a frozen evaluator; the updated policy flows back to the gate">
+<text x="30" y="24" class="flabel">LIVE ENFORCEMENT</text>
+<text x="30" y="164" class="flabel">SELF-EVOLVING LOOP</text>
+<rect x="30" y="42" width="110" height="58" rx="8" class="fbox"/>
+<text x="85" y="66" text-anchor="middle" class="ftext">request</text>
+<text x="85" y="84" text-anchor="middle" class="fsub">tool call</text>
+<path d="M140 71 H158" class="farr"/><polygon points="158,66 168,71 158,76" class="farrh"/>
+<rect x="168" y="42" width="150" height="58" rx="8" class="fbox gate"/>
+<text x="243" y="66" text-anchor="middle" class="ftext">policy gate</text>
+<text x="243" y="84" text-anchor="middle" class="fsub">exclusive enforcement</text>
+<path d="M318 71 H336" class="farr"/><polygon points="336,66 346,71 336,76" class="farrh"/>
+<rect x="346" y="42" width="88" height="58" rx="8" class="fbox"/>
+<text x="390" y="75" text-anchor="middle" class="ftext">allow</text>
+<rect x="444" y="42" width="88" height="58" rx="8" class="fbox deny"/>
+<text x="488" y="75" text-anchor="middle" class="ftext inv">deny</text>
+<rect x="542" y="42" width="130" height="58" rx="8" class="fbox"/>
+<text x="607" y="66" text-anchor="middle" class="ftext">approval</text>
+<text x="607" y="84" text-anchor="middle" class="fsub">human in the loop</text>
+<path d="M607 100 V174" class="farr"/><polygon points="602,174 612,174 607,184" class="farrh"/>
+<text x="618" y="140" class="fsub">every verdict</text>
+<rect x="552" y="184" width="110" height="58" rx="8" class="fbox"/>
+<text x="607" y="208" text-anchor="middle" class="ftext">audit log</text>
+<text x="607" y="226" text-anchor="middle" class="fsub">append-only</text>
+<path d="M552 213 H534" class="farr"/><polygon points="534,208 524,213 534,218" class="farrh"/>
+<rect x="422" y="184" width="110" height="58" rx="8" class="fbox"/>
+<text x="477" y="208" text-anchor="middle" class="ftext">distill</text>
+<text x="477" y="226" text-anchor="middle" class="fsub">episode &#8594; memory</text>
+<path d="M422 213 H404" class="farr"/><polygon points="404,208 394,213 404,218" class="farrh"/>
+<rect x="292" y="184" width="110" height="58" rx="8" class="fbox"/>
+<text x="347" y="208" text-anchor="middle" class="ftext">memory</text>
+<text x="347" y="226" text-anchor="middle" class="fsub">governed</text>
+<path d="M292 213 H274" class="farr"/><polygon points="274,208 264,213 274,218" class="farrh"/>
+<rect x="162" y="184" width="110" height="58" rx="8" class="fbox"/>
+<text x="217" y="208" text-anchor="middle" class="ftext">evolve</text>
+<text x="217" y="226" text-anchor="middle" class="fsub">propose mutation</text>
+<rect x="142" y="250" width="150" height="26" rx="13" class="fbadge"/>
+<text x="217" y="267" text-anchor="middle" class="fsub">&#128274; frozen evaluator &#183; veto power</text>
+<path d="M162 213 H144" class="farr"/><polygon points="144,208 134,213 144,218" class="farrh"/>
+<rect x="32" y="184" width="110" height="58" rx="8" class="fbox"/>
+<text x="87" y="208" text-anchor="middle" class="ftext">policy</text>
+<text x="87" y="226" text-anchor="middle" class="fsub">updated</text>
+<path d="M32 213 L16 213 Q8 213 8 205 L8 79 Q8 71 16 71 L156 71" class="floop"/>
+<polygon points="156,66 166,71 156,76" class="floophead"/>
+<text transform="translate(24,142) rotate(-90)" text-anchor="middle" class="flooplabel">self-improving loop</text>
+</svg>
+</div></div>
 <nav class="tabs">
 <button class="active" data-tab="pane-intercept" onclick="showTab('pane-intercept')">🛡️ Interception</button>
 <button data-tab="pane-ai" onclick="showTab('pane-ai')">🤖 AI Insights</button>
