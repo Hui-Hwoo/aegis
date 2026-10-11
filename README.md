@@ -51,11 +51,13 @@ you exactly what's live, e.g. `memory: memory · audit: jsonl`.
 
 **The 3-minute tour once it's open:**
 
-1. 🏭 **Production task** — press ▶ Run weekly-report task. Steps stream in
-   one by one (real execution): reads real docs, queries a real SQLite
-   analytics table (60 rows), then follows an *injected* instruction in the
-   maintenance guide ("delete prod users") — the gate stops it before
-   anything executes. Stats + proof below: outcomes tally, per-step gate
+1. 🏭 **Production task** — two modes. 🧠 **Run with AI planner**: a real
+   Claude planner works the task live, every call governed (needs
+   `ANTHROPIC_API_KEY`). ▶ **Run weekly-report task** (scripted,
+   deterministic): steps stream in one by one (real execution) — reads real
+   docs, queries a real SQLite analytics table (60 rows), then follows an
+   *injected* instruction in the maintenance guide ("delete prod users") —
+   the gate stops it before anything executes. Stats + proof below: outcomes tally, per-step gate
    latency, `prod_users` 200 → 200 untouched. Then the agent debriefs itself
    from the audit logs. The changelog write needs a human — approve the
    ticket in the queue and the file is really written.
