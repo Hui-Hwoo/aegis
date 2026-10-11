@@ -1,5 +1,7 @@
 # 🛡️ Aegis — the governed-memory harness for AI agents
 
+> **Why "Aegis"?** In Greek myth, the aegis is the shield of Zeus and Athena — ours stands between the agent and your production database.
+
 An agent asked to update docs can technically delete your production database,
 and nothing stops it except *prompt obedience*. Prompt obedience is not a
 security boundary.
