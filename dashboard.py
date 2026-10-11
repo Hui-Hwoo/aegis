@@ -9,7 +9,9 @@ The whole 3-minute live demo runs from the browser:
 
 from __future__ import annotations
 
+import hashlib
 import json
+import uuid
 import os
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -17,6 +19,8 @@ from urllib.parse import urlparse
 
 from agent import ScriptedAgent, distill_episode
 from analyst import ask as analyst_ask, task_debrief
+from planner import AI_TASK, ai_next
+import analyst as analyst_mod
 from audit import AuditLog
 from tools import init_sandbox, reset_sandbox, sandbox_state
 from evolve import analyze, propose, try_adopt
@@ -30,10 +34,32 @@ with open(os.path.join(HERE, "policy.example.json"), encoding="utf-8") as f:
     _policy0 = load_policy(json.load(f))
 
 audit = AuditLog(os.path.join(HERE, "demo-audit.jsonl"))
+
+
+def _file_sha(path: str) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        h.update(f.read())
+    return h.hexdigest()[:12]
+
+
+# The fixed evaluator the harness cannot edit: freeze its content hash at
+# startup. Every mutation is audited with this hash, so a judge can verify
+# the exam didn't change mid-demo.
+EVALUATOR_SHA = _file_sha(os.path.join(HERE, "evaluator.py"))
+
+
+def _new_session() -> str:
+    """Start a fresh audit session: a new run never mines old history."""
+    sid = uuid.uuid4().hex[:8]
+    audit.session_id = sid
+    state["session_id"] = sid
+    return sid
 memory = MemoryStore(audit=audit,
                      backend=os.environ.get("AEGIS_MEMORY_BACKEND", "auto"))
 state = {"policy": _policy0, "learned": False, "role": "analyst",
-         "task": {}, "mode": "enforce"}
+         "task": {}, "mode": "enforce", "session_id": None}
+_new_session()
 gate = Gate(state["policy"], audit=audit)
 agent = ScriptedAgent("demo-agent", ["analyst"], gate, memory, task_id="live")
 
@@ -124,7 +150,7 @@ code{font-family:ui-monospace,monospace;font-size:.8rem}
 footer{color:var(--muted);font-size:.78rem;text-align:center;padding:0 1rem 1.5rem}
 </style></head><body>
 <header>
-<h1>🛡️ Aegis</h1><span class="sub">governed memory harness · live demo<br>__BACKENDS__</span>
+<h1>🛡️ Aegis</h1><span class="sub">governed memory harness · live demo<br>__BACKENDS__ · session <span id="sess">…</span></span>
 <div class="stats">
 <div class="stat"><b id="st-block" style="color:var(--red)">0</b><span>blocked</span></div>
 <div class="stat"><b id="st-allow" style="color:var(--green)">0</b><span>allowed</span></div>
@@ -135,7 +161,8 @@ footer{color:var(--muted);font-size:.78rem;text-align:center;padding:0 1rem 1.5r
 </header>
 <main>
 <div class="card span2"><h3>🏭 Production task <span class="muted" style="font-weight:400;font-size:.8rem">weekly report — real files, real SQLite, real gate</span></h3>
-<p><button class="btn big" onclick="runTask()">▶ Run weekly-report task</button>
+<p><button class="btn big" onclick="runTask(false)">▶ Run weekly-report task</button>
+<button class="btn big" onclick="runTask(true)">🧠 Run with AI planner</button>
 <button class="btn" onclick="resetSandbox()">↺ reset demo data</button>
 <span class="muted" id="tasksummary" style="font-size:.85rem;margin-left:.6rem"></span></p>
 <div id="taskline"></div>
@@ -224,8 +251,9 @@ async function decide(id,how){
   await fetch(`/api/tickets/${id}/${how}`,{method:'POST'});
   refresh();
 }
-async function runTask(){
-  await fetch('/api/task_start',{method:'POST'});
+async function runTask(planner){
+  const s=await fetch('/api/task_start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({planner:!!planner})}).then(r=>r.json());
+  if(s.error){document.getElementById('taskline').innerHTML='<span class="muted">'+esc(s.error)+'</span>';return;}
   document.getElementById('taskline').innerHTML='<table id="tasktable"></table><div id="thinking" class="muted" style="padding:.4rem 0">🤔 agent thinking…</div>';
   document.getElementById('taskproof').innerHTML='';
   document.getElementById('debrief').innerHTML='';
@@ -347,7 +375,7 @@ async function doEvolve(){
   const r=await fetch('/api/evolve',{method:'POST'}).then(r=>r.json());
   evolved=true;
   document.getElementById('evol').innerHTML = r.mutations.length ?
-    '<p class="muted" style="font-size:.8rem">fixed evaluator — the harness cannot edit it · triggered automatically after distill</p>'+r.mutations.map(m=>{
+    `<p class="muted" style="font-size:.8rem">fixed evaluator <b>sha256:${r.evaluator_sha}</b> — frozen at startup, the harness cannot edit it · triggered automatically after distill</p>`+r.mutations.map(m=>{
       let why='';
       if(!m.adopted){
         if(m.after.probe_pass_rate<m.before.probe_pass_rate) why='held-out probe failed';
@@ -373,6 +401,7 @@ function refresh(){
     fetch('/api/task_state').then(r=>r.json())
   ]).then(([t,a,m,tsk])=>{
     if(tsk.task&&tsk.task.steps&&tsk.task.steps.length) renderTask(tsk.task);
+    if(tsk.session_id) document.getElementById('sess').textContent=tsk.session_id;
     // stats
     const denies=a.filter(e=>e.outcome==='DENY').length;
     const allows=a.filter(e=>e.outcome==='ALLOW').length;
@@ -487,7 +516,8 @@ class Handler(BaseHTTPRequestHandler):
                         for d in reversed(memory.list_all())])
         elif path == "/api/task_state":
             self._json({"task": _task_view(),
-                        "sandbox": sandbox_state()})
+                        "sandbox": sandbox_state(),
+                        "session_id": state.get("session_id")})
         elif path == "/api/matrix":
             # same requests, different verdicts per role — throwaway gates,
             # no audit spam, no tool execution (check() never executes)
@@ -549,7 +579,8 @@ class Handler(BaseHTTPRequestHandler):
                 gate.policy = new_policy
             self._json(resp)
         elif path == "/api/evolve":
-            stats = analyze(audit.read_all(limit=10000),
+            stats = analyze(audit.read_all(limit=10000,
+                                           session=state["session_id"]),
                             list(gate.tickets.values()))
             out = []
             for m in propose(state["policy"], stats):
@@ -559,6 +590,10 @@ class Handler(BaseHTTPRequestHandler):
                     state["policy"] = new_policy
                     gate.policy = new_policy
                     new_policy.mode = state.get("mode", "enforce")
+                audit.append({"event": "mutation",
+                                "description": m["description"],
+                                "adopted": adopted,
+                                "evaluator_sha": EVALUATOR_SHA})
                 out.append({"description": m["description"],
                             "benefit": m["benefit"],
                             "adopted": adopted,
@@ -566,7 +601,7 @@ class Handler(BaseHTTPRequestHandler):
                                        if not k.startswith("n_")},
                             "after": {k: v for k, v in after.items()
                                       if not k.startswith("n_")}})
-            self._json({"mutations": out})
+            self._json({"mutations": out, "evaluator_sha": EVALUATOR_SHA})
         elif path.startswith("/api/tickets/"):
             parts = path.rsplit("/", 2)
             ticket_id, how = parts[-2], parts[-1]
@@ -592,12 +627,27 @@ class Handler(BaseHTTPRequestHandler):
                 state["policy"].mode = mode
                 self._json({"ok": True, "mode": mode})
         elif path == "/api/task_start":
+            length = int(self.headers.get("Content-Length", 0) or 0)
+            payload = json.loads(self.rfile.read(length) or b"{}")
+            use_planner = bool(payload.get("planner"))
+            if use_planner and not analyst_mod.API_KEY:
+                self._json({"error": "AI planner needs ANTHROPIC_API_KEY"}, 400)
+                return
             init_sandbox()  # ensure seeded, never clobbers
-            state["task_run"] = {"specs": _task_specs(), "steps": [],
-                                 "before": sandbox_state(),
-                                 "changelog_ticket": None, "complete": False,
-                                 "after": None, "prod_intact": None}
-            self._json({"ok": True, "n_steps": 5})
+            if use_planner:
+                state["task_run"] = {"planner": True, "task": AI_TASK,
+                                     "history": [], "steps": [],
+                                     "before": sandbox_state(),
+                                     "changelog_ticket": None,
+                                     "complete": False, "after": None,
+                                     "prod_intact": None, "failures": 0}
+            else:
+                state["task_run"] = {"specs": _task_specs(), "steps": [],
+                                     "before": sandbox_state(),
+                                     "changelog_ticket": None,
+                                     "complete": False, "after": None,
+                                     "prod_intact": None}
+            self._json({"ok": True, "planner": use_planner})
         elif path == "/api/task_next":
             # execute exactly ONE planned step for real, then return it.
             # the frontend calls this in a loop to stream the agent working.
@@ -607,6 +657,21 @@ class Handler(BaseHTTPRequestHandler):
             elif run["complete"]:
                 self._json({"done": True, "task": _task_view()})
             else:
+                if run.get("planner"):
+                    done, step = ai_next(run, agent,
+                                         learned=state["learned"])
+                    if step and step["outcome"] == "REQUIRE_APPROVAL" \
+                            and step.get("ticket_id"):
+                        run["changelog_ticket"] = step["ticket_id"]
+                    if done:
+                        run["complete"] = True
+                        run["after"] = sandbox_state()
+                        b, a = run["before"], run["after"]
+                        run["prod_intact"] = (a["prod_users"] == b["prod_users"]
+                                              and b["prod_users"] > 0)
+                    self._json({"done": done, "step": step,
+                                "task": _task_view()})
+                    return
                 label, action, targets, args = run["specs"][len(run["steps"])]
                 t0 = time.perf_counter()
                 r = agent.plan(action, targets, learned=state["learned"],
@@ -650,7 +715,9 @@ class Handler(BaseHTTPRequestHandler):
         elif path == "/api/reset_sandbox":
             reset_sandbox()
             state["task_run"] = None
-            self._json({"ok": True, "sandbox": sandbox_state()})
+            sid = _new_session()
+            self._json({"ok": True, "sandbox": sandbox_state(),
+                        "session_id": sid})
         else:
             self._json({"error": "not found"}, 404)
 

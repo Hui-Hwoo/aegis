@@ -7,7 +7,16 @@ security boundary.
 Aegis is the harness layer that gets agents from demo to deployment:
 **policy-enforced tool calls, human approval for privilege escalation,
 governed long-term memory, and a self-improvement loop — all on
-MongoDB Atlas Agent Engine.**
+MongoDB Atlas.**
+
+> **Framing, stated plainly:** the harness is the product. The governed
+> agent in our demo is intentionally simple — enforcement never depends on
+> the agent being smart, so any planner (scripted or LLM) is governed the
+> same way. The project's LLM (Ask Aegis analyst + task debrief) is
+> deliberately *outside* the enforcement path: it summarizes and proposes,
+> it can never approve or deny. All hard numbers below come from our own
+> deterministic suite (17 tests, local runs) — treat them as evidence, not
+> as an external benchmark.
 
 ![Aegis architecture](docs/architecture.svg)
 

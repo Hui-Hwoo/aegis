@@ -16,6 +16,17 @@ Record on-site Oct 11. Must show ONLY what was built during the hackathon
 
 ## 3-minute live demo (Round 1) + Q&A prep
 
+### Open with this (15s — preempts the 3 hardest judge questions)
+
+> "Two things to know before we start. **One: the harness is the product.**
+> The agent under governance is intentionally simple — swap in any LLM
+> planner and the gate still holds, because enforcement never depends on
+> the agent's intelligence. **Two: the LLM is deliberately OUTSIDE the
+> enforcement path.** It summarizes and proposes, it can never approve or
+> deny — that's the design, not a gap. Every number I show is from our own
+> deterministic suite — 17 tests, local — not a benchmark."
+
+
 Drive it from the dashboard (`python dashboard.py`): the whole arc is live,
 no slides.
 

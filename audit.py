@@ -12,6 +12,7 @@ class AuditLog:
     def __init__(self, path: str = "audit.jsonl"):
         self.path = path
         self._collection = None
+        self.session_id: str | None = None  # set by the dashboard per run
         uri = os.environ.get("MONGODB_URI")
         if uri:
             try:
@@ -25,6 +26,8 @@ class AuditLog:
     def append(self, event: dict) -> None:
         event = dict(event)
         event.setdefault("ts", datetime.now(timezone.utc).isoformat())
+        if self.session_id:
+            event.setdefault("session", self.session_id)
         if self._collection is not None:
             try:
                 self._collection.insert_one(event)
@@ -35,12 +38,18 @@ class AuditLog:
         with open(self.path, "a", encoding="utf-8") as f:
             f.write(json.dumps(event, ensure_ascii=False) + "\n")
 
-    def read_all(self, limit: int = 500) -> list[dict]:
-        """Newest-first. Used by the dashboard."""
+    def read_all(self, limit: int = 500,
+                 session: str | None = None) -> list[dict]:
+        """Newest-first. Used by the dashboard.
+
+        session: when given, only events tagged with that session id are
+        returned — a new demo run never mines a previous run's history.
+        """
         if self._collection is not None:
             try:
+                q = {"session": session} if session else {}
                 return list(
-                    self._collection.find({}, {"_id": 0})
+                    self._collection.find(q, {"_id": 0})
                     .sort("ts", -1)
                     .limit(limit)
                 )
@@ -51,6 +60,8 @@ class AuditLog:
         with open(self.path, encoding="utf-8") as f:
             lines = f.readlines()[-limit:]
         events = [json.loads(line) for line in lines if line.strip()]
+        if session:
+            events = [e for e in events if e.get("session") == session]
         return list(reversed(events))
 
     @property

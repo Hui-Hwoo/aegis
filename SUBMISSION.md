@@ -31,6 +31,14 @@ honestly-labelled local digest without a key) summarizes what ran, what was
 blocked, and the proof — reading the same Atlas audit collection the judges
 can inspect live.
 
+Framing, stated plainly: the harness is the product — the governed demo
+agent is intentionally simple, and enforcement never depends on the agent
+being smart. The LLM is deliberately outside the enforcement path (it
+summarizes and proposes; it can never approve or deny). All hard numbers
+(5/5 attacks blocked, denials 5→0, gate latency) come from our own
+deterministic suite — 17 unit tests, local runs — evidence, not an external
+benchmark.
+
 Solidity: 17 deterministic unit tests (deny-wins, default-deny, smuggled
 targets, approval executes the real call, traversal guard, 3x3 role matrix,
 evaluator baselines, mutation adopt/rollback, analyst intent parsing);
