@@ -149,39 +149,75 @@ code{font-family:ui-monospace,SFMono-Regular,monospace;font-size:.8rem;backgroun
 .step .box{flex:0 0 1.5rem;height:1.5rem;border-radius:50%;border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--muted)}
 .step.done .box{background:var(--fg);border-color:var(--fg);color:var(--bg);font-weight:700}
 .step .hint{display:block;font-size:.78rem;color:var(--muted);margin-top:.15rem}
-footer{color:var(--muted);font-size:.78rem;text-align:center;padding:0 1rem 1.5rem}</style></head><body>
+footer{color:var(--muted);font-size:.78rem;text-align:center;padding:0 1rem 1.5rem}
+.flowchart{background:var(--bg);border-bottom:1px solid var(--border);padding:.7rem 1.2rem;display:flex;align-items:center;gap:.45rem;overflow-x:auto;font-size:.8rem}
+.fstep{border:1px solid var(--border2);border-radius:8px;padding:.4rem .7rem;text-align:center;white-space:nowrap;background:var(--card)}
+.fstep b{display:block;font-size:.82rem}
+.fstep small{color:var(--muted);font-size:.68rem}
+.fstep.gate{border-width:2px}
+.fstep.deny{background:var(--pill);color:var(--pillfg);border-color:var(--pill)}
+.farrow{color:var(--muted);font-size:1rem;flex-shrink:0}
+.floop{margin-left:auto;border:1px dashed var(--border2);border-radius:8px;padding:.4rem .7rem;white-space:nowrap;color:var(--muted);font-size:.76rem;flex-shrink:0}
+.floop b{color:var(--fg)}
+.cols2{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:1rem;align-items:start}
+@media(max-width:900px){.cols2{grid-template-columns:1fr}}
+.evoflow{display:flex;align-items:stretch;gap:.4rem;overflow-x:auto;padding:.2rem 0 .8rem;font-size:.8rem}
+.efstep{border:1px solid var(--border2);border-radius:8px;padding:.55rem .8rem;text-align:center;white-space:nowrap;background:var(--card);flex-shrink:0}
+.efstep b{display:block;font-size:.85rem;margin-bottom:.15rem}
+.efstep small{color:var(--muted);font-size:.7rem}
+.efarr{align-self:center;color:var(--muted);flex-shrink:0}</style></head><body>
 <header>
 <h1>🛡️ Aegis</h1><span class="sub">governed memory harness · live demo<br>__BACKENDS__ · session <span id="sess">…</span></span>
 <div class="stats">
-<div class="stat"><b id="st-block">0</b><span>blocked</span></div>
-<div class="stat"><b id="st-allow">0</b><span>allowed</span></div>
-<div class="stat"><b id="st-pend">0</b><span>pending approvals</span></div>
-<div class="stat"><b id="st-events">0</b><span>audit events</span></div>
-<div class="stat"><b id="st-mem">0</b><span>memories</span></div>
+<div class="stat"><b id="st-block">0</b><span>⛔ blocked</span></div>
+<div class="stat"><b id="st-allow">0</b><span>✅ allowed</span></div>
+<div class="stat"><b id="st-pend">0</b><span>⏳ approvals</span></div>
+<div class="stat"><b id="st-events">0</b><span>📜 events</span></div>
+<div class="stat"><b id="st-mem">0</b><span>🧠 memories</span></div>
 </div>
 <button id="themebtn" onclick="toggleTheme()" title="toggle dark mode">🌙</button>
 </header>
+<div class="flowchart" title="every request flows through the gate; every verdict is audited; audit distills into memory; memory evolves policy">
+<div class="fstep"><b>request</b><small>tool call</small></div><div class="farrow">→</div>
+<div class="fstep gate"><b>policy gate</b><small>fixed evaluator</small></div><div class="farrow">→</div>
+<div class="fstep"><b>allow</b></div>
+<div class="fstep deny"><b>deny</b></div>
+<div class="fstep"><b>approval</b><small>human</small></div><div class="farrow">→</div>
+<div class="fstep"><b>audit log</b><small>append-only</small></div>
+<div class="floop" title="self-evolving loop">↺ <b>distill</b> → <b>memory</b> → <b>evolve</b> → policy</div>
+</div>
 <nav class="tabs">
-<button class="active" data-tab="pane-task" onclick="showTab('pane-task')">🏭 Production task</button>
-<button data-tab="pane-govern" onclick="showTab('pane-govern')">🛡️ Governance</button>
-<button data-tab="pane-evolve" onclick="showTab('pane-evolve')">🧬 Evolution</button>
-<button data-tab="pane-inspect" onclick="showTab('pane-inspect')">🔍 Inspect</button>
+<button class="active" data-tab="pane-intercept" onclick="showTab('pane-intercept')">🛡️ Interception</button>
+<button data-tab="pane-ai" onclick="showTab('pane-ai')">🤖 AI Insights</button>
+<button data-tab="pane-evo" onclick="showTab('pane-evo')">🧬 Evolution</button>
 </nav>
 <main>
-<section class="tabpane active" id="pane-task">
-<div class="card span2"><h3>🏭 Production task <span class="muted" style="font-weight:400;font-size:.8rem">weekly report — real files, real SQLite, real gate</span></h3>
+<section class="tabpane active" id="pane-intercept">
+<div class="cols2">
+<div>
+<div class="card"><h3>🏭 Production task <span class="muted" style="font-weight:400;font-size:.8rem">weekly report — real files, real SQLite, real gate</span></h3>
 <p><button class="btn big" onclick="runTask(false)">▶ Run weekly-report task</button>
 <button class="btn big" onclick="runTask(true)">🧠 Run with AI planner</button>
 <button class="btn" onclick="resetSandbox()">↺ reset demo data</button>
-<button class="btn" onclick="showTab('pane-govern')">→ approval queue</button>
+<button class="btn" onclick="showTab('pane-intercept')">→ approval queue</button>
 <span class="muted" id="tasksummary" style="font-size:.85rem;margin-left:.6rem"></span></p>
 <div id="taskline"></div>
 <div id="taskproof" class="muted" style="font-size:.85rem;margin-top:.5rem"></div>
-<div id="debrief"></div>
 </div>
-</section>
-<section class="tabpane" id="pane-govern">
-<div class="card span2"><h3>🔐 Agent authorization <span class="muted" style="font-weight:400;font-size:.8rem">same request, different verdict per role</span></h3>
+
+<div class="card">
+<h3>⚔️ Attack console <span class="muted" style="font-weight:400;font-size:.8rem">red-team the same system — tickets land in the approval queue →</span></h3>
+<div id="banner"></div>
+<div id="btns"></div>
+</div>
+
+<div class="card"><h3>📜 History <span class="muted" style="font-weight:400;font-size:.8rem">every decision, newest first</span></h3>
+<div id="logwrap"><table id="auditt"></table></div></div>
+
+
+</div>
+<div>
+<div class="card"><h3>🔐 Agent authorization <span class="muted" style="font-weight:400;font-size:.8rem">same request, different verdict per role</span></h3>
 <p id="rolepills">
 <button class="btn" data-role="intern" onclick="setRole('intern')">intern</button>
 <button class="btn" data-role="analyst" onclick="setRole('analyst')">analyst</button>
@@ -191,25 +227,36 @@ footer{color:var(--muted);font-size:.78rem;text-align:center;padding:0 1rem 1.5r
 <table id="matrix"></table>
 </div>
 
-<div class="card">
-<h3>⚔️ Attack console <span class="muted" style="font-weight:400;font-size:.8rem">red-team the same system — tickets land in the approval queue →</span></h3>
-<div id="banner"></div>
-<div id="btns"></div>
-</div>
-<div class="card">
-<h3>📋 Guided demo <span class="muted" style="font-weight:400;font-size:.8rem">— follow the steps</span></h3>
-<div id="steps">
-<div class="step" id="step1"><div class="box">1</div><div>Block 2 attacks<span class="hint"></span></div></div>
-<div class="step" id="step2"><div class="box">2</div><div>Poisoned-memory attack still blocked<span class="hint"></span></div></div>
-<div class="step" id="step3"><div class="box">3</div><div>Trigger approvals → approve both<span class="hint"></span></div></div>
-<div class="step" id="step4"><div class="box">4</div><div>Distill the episode (RSI)<span class="hint"></span></div></div>
-<div class="step" id="step5"><div class="box">5</div><div>Auto-evolution vetoes its own bad idea<span class="hint"></span></div></div>
-<div class="step" id="step6"><div class="box">6</div><div>Ask the AI analyst<span class="hint"></span></div></div>
-</div>
-</div>
+
 <div class="card" id="tickets"><h3>⏳ Approval queue</h3><div id="ticketlist"><span class="muted">— empty: click “🟡 Write notes” to create a ticket —</span></div></div>
+
+</div>
+</div>
 </section>
-<section class="tabpane" id="pane-evolve">
+<section class="tabpane" id="pane-ai">
+<div class="card"><h3>🤖 Agent debrief <span class="muted" style="font-weight:400;font-size:.8rem">AI summary of the run — from live audit events</span></h3><div id="debrief"><span class="muted">— run the task in 🛡️ Interception, then debrief lands here —</span></div></div>
+<div class="card"><h3>🤖 Ask Aegis <span class="muted" style="font-weight:400;font-size:.8rem">AI analyst over the audit log — read-only; proposals still pass the fixed evaluator</span></h3>
+<div style="margin-bottom:.6rem">
+<button class="btn" onclick="quickAsk('Summarize the last hour')">Summarize last hour</button>
+<button class="btn" onclick="quickAsk('Which requests need my decision?')">Needs my decision?</button>
+<button class="btn" onclick="quickAsk('Auto-deny any future request to delete prod data')">Auto-deny prod deletions</button>
+<button class="btn" onclick="quickAsk('Auto-approve future docs writes without asking me')">Auto-approve docs writes</button>
+</div>
+<p><input id="q" placeholder="Ask about anomalies, or propose a policy change..." style="width:68%;padding:.55rem;border-radius:6px;border:1px solid var(--border2);background:var(--card);color:var(--fg)">
+<button class="btn big" onclick="ask()">Ask</button> <span class="muted" id="askbackend" style="font-size:.78rem"></span></p>
+<div id="aout"></div></div>
+
+</section>
+<section class="tabpane" id="pane-evo">
+<div class="card"><h3>🧬 How self-evolution works</h3>
+<div class="evoflow">
+<div class="efstep"><b>audit log</b><small>every verdict</small></div><div class="efarr">→</div>
+<div class="efstep"><b>distill</b><small>episode → memory</small></div><div class="efarr">→</div>
+<div class="efstep"><b>memory</b><small>governed</small></div><div class="efarr">→</div>
+<div class="efstep"><b>propose</b><small>policy mutation</small></div><div class="efarr">→</div>
+<div class="efstep"><b>fixed evaluator</b><small>frozen · veto power</small></div><div class="efarr">→</div>
+<div class="efstep"><b>adopt / rollback</b><small>policy updated</small></div>
+</div></div>
 <div class="card"><h3>🧬 Self-evolution controls</h3>
 <p>
 <button class="btn big" onclick="learn()">🧠 Distill episode → memory</button>
@@ -219,22 +266,9 @@ footer{color:var(--muted);font-size:.78rem;text-align:center;padding:0 1rem 1.5r
 </p></div>
 <div class="card"><h3>🧠 Memory <span class="muted" style="font-weight:400;font-size:.8rem">governed episodic + procedural</span></h3><div id="mem"></div></div>
 <div class="card"><h3>🧬 Policy self-evolution <span class="muted" style="font-weight:400;font-size:.8rem">fixed evaluator — frozen at startup</span></h3><div id="evol"><span class="muted">— press “🧬 Evolve policy” —</span></div></div>
-</section>
-<section class="tabpane" id="pane-inspect">
-<div class="card"><h3>🤖 Ask Aegis <span class="muted" style="font-weight:400;font-size:.8rem">AI analyst over the audit log — read-only; proposals still pass the fixed evaluator</span></h3>
-<div style="margin-bottom:.6rem">
-<button class="btn" onclick="quickAsk('总结最近1小时的情况')">总结最近1小时</button>
-<button class="btn" onclick="quickAsk('哪些请求需要我判断？')">哪些需要我判断？</button>
-<button class="btn" onclick="quickAsk('以后删除 prod 数据的请求都自动拒绝')">以后删除 prod 数据都自动拒绝</button>
-<button class="btn" onclick="quickAsk('以后 docs 的写入都自动批准，不用再问我')">docs 写入自动批准</button>
-</div>
-<p><input id="q" placeholder="问：最近有什么异常？ / 以后……都拒绝" style="width:68%;padding:.55rem;border-radius:6px;border:1px solid var(--border2);background:var(--card);color:var(--fg)">
-<button class="btn big" onclick="ask()">Ask</button> <span class="muted" id="askbackend" style="font-size:.78rem"></span></p>
-<div id="aout"></div></div>
-<div class="card"><h3>📜 Audit log <span class="muted" style="font-weight:400;font-size:.8rem">append-only → Atlas · newest first</span></h3>
-<div id="logwrap"><table id="auditt"></table></div></div>
 
 </section>
+
 </main>
 <footer>every tool call → policy gate → audit · memory reads/writes are governed too · the fixed evaluator cannot be edited by the harness</footer>
 <script>
