@@ -152,7 +152,7 @@ code{font-family:ui-monospace,SFMono-Regular,monospace;font-size:.8rem;backgroun
 footer{color:var(--muted);font-size:.78rem;text-align:center;padding:0 1rem 1.5rem}
 .flowcard{max-width:1060px;margin:0 auto;padding:1.1rem 1.2rem 0}
 .flowcard .card{margin-bottom:.9rem}
-.flowsvg{width:100%;height:auto;display:block}
+.flowsvg{width:100%;max-width:720px;height:auto;display:block;margin:0 auto}
 .flowsvg .fbox{fill:var(--card);stroke:var(--border2);stroke-width:1.5}
 .flowsvg .fbox.gate{stroke:var(--fg);stroke-width:2.5}
 .flowsvg .fbox.deny{fill:var(--pill);stroke:var(--pill)}
@@ -167,6 +167,10 @@ footer{color:var(--muted);font-size:.78rem;text-align:center;padding:0 1rem 1.5r
 .flowsvg .flabel{fill:var(--muted);font-size:10px;letter-spacing:2px;font-weight:600}
 .flowsvg .fbadge{fill:var(--hover);stroke:var(--border2);stroke-width:1}
 .cols2{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:1rem;align-items:start}
+#matrix{font-size:.76rem}
+#matrix td,#matrix th{padding:.26rem .35rem}
+#matrix .badge{font-size:.64rem;padding:.08rem .4rem}
+#rolepills .btn{padding:.32rem .6rem;font-size:.8rem;margin:.12rem}
 @media(max-width:900px){.cols2{grid-template-columns:1fr}}
 .evoflow{display:flex;align-items:stretch;gap:.4rem;overflow-x:auto;padding:.2rem 0 .8rem;font-size:.8rem}
 .efstep{border:1px solid var(--border2);border-radius:8px;padding:.55rem .8rem;text-align:center;white-space:nowrap;background:var(--card);flex-shrink:0}
@@ -511,14 +515,6 @@ function refresh(){
     document.getElementById('st-pend').textContent=t.length;
     document.getElementById('st-events').textContent=a.length;
     document.getElementById('st-mem').textContent=m.length;
-    // checklist
-    const approved=a.filter(e=>e.event==='approval_decided'&&e.outcome==='APPROVED').length;
-    setStep(1,denies>=2,denies>=2?`${denies} blocked`:'click two 🔴 attack buttons');
-    setStep(2,poisoned,poisoned?'blocked despite poisoned memory':'click the ☠️ button');
-    setStep(3,approved>=2,approved>=2?`${approved} tickets approved`:'click “🟡 Write notes” twice, approve both tickets');
-    setStep(4,learned,learned?'denials distilled into memory':'press 🧠 Distill');
-    setStep(5,evolved,evolved?'see the Policy evolution panel':'auto-runs after Distill (or press 🧬 Evolve)');
-    setStep(6,asked,asked?'analyst answered':'ask it anything about the audit log');
     // tickets
     document.getElementById('tickets').classList.toggle('hot',t.length>0);
     document.getElementById('ticketlist').innerHTML = t.length ? t.map(x=>
