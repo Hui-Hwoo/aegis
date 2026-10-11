@@ -1,0 +1,16 @@
+# Aegis core runs on the standard library only. Everything below is optional
+# and degrades gracefully when missing:
+#
+#   pymongo                 -> audit log writes to an Atlas collection
+#                              (falls back to local JSONL)
+#   agent-engine-sdk-memory -> real Atlas Agent Engine memory
+#                              (falls back to deterministic in-memory store)
+#   fastapi + uvicorn       -> live dashboard (optional)
+#
+# NOTE: agent-engine-sdk-memory is alpha (v0.1.x) with frequent breaking
+# changes. Pin the exact version you install at the event, e.g.:
+#   pip install agent-engine-sdk-memory==0.1.3
+pymongo>=4.0
+agent-engine-sdk-memory>=0.1.0
+fastapi>=0.100
+uvicorn>=0.20
