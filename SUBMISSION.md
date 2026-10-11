@@ -23,7 +23,10 @@ held-out probe caught a path-traversal hole). Live: 5/5 attacks blocked, 0 escap
 poisoned-memory attack. An AI analyst ("Ask Aegis") answers natural-language
 questions over the audit log and turns operator intent ("auto-reject prod
 deletes from now on") into policy proposals — still gated by the fixed
-evaluator, read-only by construction. After each production task the agent
+evaluator, read-only by construction. The production task runs in two modes: a deterministic scripted run, and
+a live Claude planner mode (🧠 Run with AI planner) where the LLM decides
+each tool call and the gate governs every one — proving enforcement never
+depends on the agent being smart. After each production task the agent
 debriefs itself from the audit logs: the task streams step-by-step with
 per-step gate latency and an outcomes tally (no mock data — every step
 really executes), then an LLM (Claude via ANTHROPIC_API_KEY, or an
