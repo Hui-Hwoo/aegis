@@ -176,7 +176,10 @@ footer{color:var(--muted);font-size:.78rem;text-align:center;padding:0 1rem 1.5r
 .efstep{border:1px solid var(--border2);border-radius:8px;padding:.55rem .8rem;text-align:center;white-space:nowrap;background:var(--card);flex-shrink:0}
 .efstep b{display:block;font-size:.85rem;margin-bottom:.15rem}
 .efstep small{color:var(--muted);font-size:.7rem}
-.efarr{align-self:center;color:var(--muted);flex-shrink:0}</style></head><body>
+.efarr{align-self:center;color:var(--muted);flex-shrink:0}
+.evoloop{border:1px dashed var(--border2);border-radius:8px;padding:.55rem .9rem;margin:0 0 .9rem;font-size:.83rem;color:var(--muted);display:flex;align-items:center;gap:.6rem}
+.evoloop .loopicon{font-size:1.3rem;flex-shrink:0}
+.evoloop b{color:var(--fg)}</style></head><body>
 <header>
 <h1>🛡️ Aegis</h1><span class="sub">governed memory harness · live demo<br>__BACKENDS__ · session <span id="sess">…</span></span>
 <div class="stats">
@@ -308,16 +311,19 @@ footer{color:var(--muted);font-size:.78rem;text-align:center;padding:0 1rem 1.5r
 <div class="efstep"><b>propose</b><small>policy mutation</small></div><div class="efarr">→</div>
 <div class="efstep"><b>fixed evaluator</b><small>frozen · veto power</small></div><div class="efarr">→</div>
 <div class="efstep"><b>adopt / rollback</b><small>policy updated</small></div>
-</div></div>
+</div>
+<div class="evoloop"><span class="loopicon">↺</span><span><b>loop closes:</b> the updated policy goes live in the gate — the next request is judged by the evolved policy, and its verdict feeds the next cycle</span></div>
+</div>
 <div class="card"><h3>🧬 Self-evolution controls</h3>
 <p>
 <button class="btn big" onclick="learn()">🧠 Distill episode → memory</button>
 <button class="btn big" onclick="evolve()">🧬 Evolve policy (self-rewriting rules)</button>
 <label style="font-size:.82rem;color:var(--muted);margin-left:.6rem"><input type="checkbox" id="autopilot" checked> auto-evolve after distill</label>
 <label style="font-size:.82rem;color:var(--muted);margin-left:.6rem" title="Dry-run: would-deny is logged but allowed through"><input type="checkbox" id="observemode" onchange="setMode(this.checked?'observe':'enforce')"> observe mode (dry-run)</label>
-</p></div>
+</p>
+<div id="evol" style="margin-top:.6rem"><span class="muted">results appear here after evolving</span></div></div>
 <div class="card"><h3>🧠 Memory <span class="muted" style="font-weight:400;font-size:.8rem">governed episodic + procedural</span></h3><div id="mem"></div></div>
-<div class="card"><h3>🧬 Policy self-evolution <span class="muted" style="font-weight:400;font-size:.8rem">fixed evaluator — frozen at startup</span></h3><div id="evol"><span class="muted">— press “🧬 Evolve policy” —</span></div></div>
+
 
 </section>
 
