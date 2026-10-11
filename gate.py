@@ -13,7 +13,7 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
-from .policy import AccessRequest, Decision, Policy, evaluate
+from policy import AccessRequest, Decision, Policy, evaluate
 
 
 @dataclass

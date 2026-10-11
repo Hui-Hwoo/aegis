@@ -16,7 +16,7 @@ Record on-site Oct 11. Must show ONLY what was built during the hackathon
 
 ## 3-minute live demo (Round 1) + Q&A prep
 
-Drive it from the dashboard (`python -m aegis.dashboard`): click attacks,
+Drive it from the dashboard (`python dashboard.py`): click attacks,
 watch decisions land, approve the ticket live when it pops up.
 
 1. **(30s)** The problem: "An agent asked to update docs can delete prod.

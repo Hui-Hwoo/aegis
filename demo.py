@@ -16,11 +16,11 @@ import time
 
 sys.path.insert(0, ".")
 
-from aegis.agent import AttemptResult, ScriptedAgent, distill_episode
-from aegis.audit import AuditLog
-from aegis.gate import Gate
-from aegis.memory_store import MemoryStore
-from aegis.policy import load_policy
+from agent import AttemptResult, ScriptedAgent, distill_episode
+from audit import AuditLog
+from gate import Gate
+from memory_store import MemoryStore
+from policy import load_policy
 
 
 def banner(title: str):
@@ -153,7 +153,7 @@ def main():
 
     # ================= Act 5 =================
     banner("ACT 5 — the harness rewrites its own rules")
-    from aegis import evolve as EVOLVE
+    import evolve as EVOLVE
 
     print("  the evaluator suite is FIXED — the harness cannot edit it;")
     print("  every proposed rule change must pass it, or it is rolled back.\n")
@@ -198,7 +198,7 @@ def main():
     print(f"  audit events:                         "
           f"{len(audit.read_all(limit=10000))} (append-only, identity-bound)")
     print("\nDone. Audit log: demo-audit.jsonl | "
-          "Dashboard: python -m aegis.dashboard")
+          "Dashboard: python dashboard.py")
 
 
 if __name__ == "__main__":

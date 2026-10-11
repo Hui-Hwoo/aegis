@@ -18,9 +18,9 @@ from __future__ import annotations
 import copy
 from collections import Counter, defaultdict
 
-from . import evaluator as EV
-from .gate import Gate
-from .policy import AccessRequest, Policy, glob_to_regexp
+import evaluator as EV
+from gate import Gate
+from policy import AccessRequest, Policy, glob_to_regexp
 
 
 # ---------------------------------------------------------------- analyze

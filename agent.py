@@ -13,9 +13,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from .gate import Gate
-from .memory_store import MemoryStore
-from .policy import AccessRequest
+from gate import Gate
+from memory_store import MemoryStore
+from policy import AccessRequest
 
 
 # ---- simulated tool execution (the point is the gate, not the tools) ----

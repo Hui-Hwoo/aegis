@@ -45,7 +45,7 @@ Runs the 4-act scripted demo and prints the scoreboard:
 block rate, approval flow, RSI episode-1→2 denial counts, audit size.
 
 ```bash
-python -m aegis.dashboard   # live demo UI at http://localhost:8000
+python -m dashboard   # live demo UI at http://localhost:8000
 # pip install fastapi uvicorn   (only needed for the dashboard)
 ```
 
@@ -70,13 +70,15 @@ No code changes needed — backends are selected by environment.
 
 | File | What it is |
 |---|---|
-| `aegis/policy.py` | Pure policy engine (port of the battle-tested Cerberus engine): ordered rules, glob resources, deny-wins, default-deny |
-| `aegis/gate.py` | Enforcement point: ALLOW / DENY / REQUIRE_APPROVAL (+ `observe` dry-run mode), approval tickets |
-| `aegis/audit.py` | Append-only audit log → Atlas collection or local JSONL |
-| `aegis/memory_store.py` | Agent Engine memory SDK wrapper with in-memory fallback; all reads/writes audited |
-| `aegis/agent.py` | Scripted adversarial agent + `distill_episode` (the RSI loop) |
-| `aegis/dashboard.py` | Live demo UI: attack console, approval queue, audit log, memory browser |
-| `demo.py` | 4-act scripted demo with hard metrics |
+| `policy.py` | Pure policy engine (port of the battle-tested Cerberus engine): ordered rules, glob resources, deny-wins, default-deny |
+| `gate.py` | Enforcement point: ALLOW / DENY / REQUIRE_APPROVAL (+ `observe` dry-run mode), approval tickets |
+| `audit.py` | Append-only audit log → Atlas collection or local JSONL |
+| `memory_store.py` | Agent Engine memory SDK wrapper with in-memory fallback; all reads/writes audited |
+| `agent.py` | Scripted adversarial agent + `distill_episode` (the RSI loop) |
+| `evolve.py` | Policy self-evolution: mine audit → propose mutations → fixed-evaluator gating → adopt/rollback |
+| `evaluator.py` | **Fixed** evaluation suite (attacks / legit / held-out probes) — the harness cannot edit this |
+| `dashboard.py` | Live demo UI: attack console, approval queue, audit log, memory browser |
+| `demo.py` | 4-act scripted demo with hard metrics (+ Act 5 self-evolution) |
 | `policy.example.json` | Demo-domain policy (analyst role, docs/db/email/memory resources) |
 
 ## Policy model

@@ -1,6 +1,6 @@
 """Aegis live dashboard: attack console, approval queue, audit log, memory.
 
-Run:  python -m aegis.dashboard   (then open http://localhost:8000)
+Run:  python dashboard.py   (then open http://localhost:8000)
 The whole 4-act demo can be driven from the browser — click an attack,
 watch the gate decide, approve the ticket when it pops up.
 """
@@ -10,11 +10,11 @@ from __future__ import annotations
 import json
 import os
 
-from aegis.agent import ScriptedAgent, distill_episode
-from aegis.audit import AuditLog
-from aegis.gate import Gate
-from aegis.memory_store import MemoryStore
-from aegis.policy import load_policy
+from agent import ScriptedAgent, distill_episode
+from audit import AuditLog
+from gate import Gate
+from memory_store import MemoryStore
+from policy import load_policy
 
 try:
     from fastapi import FastAPI
@@ -24,7 +24,7 @@ except ImportError:  # pragma: no cover
     raise SystemExit("dashboard needs fastapi + uvicorn: pip install -r requirements.txt")
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.dirname(HERE)
+ROOT = HERE  # flat layout: modules live at the repo root
 
 with open(os.path.join(ROOT, "policy.example.json"), encoding="utf-8") as f:
     policy = load_policy(json.load(f))
