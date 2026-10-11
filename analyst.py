@@ -32,7 +32,7 @@ from datetime import datetime, timedelta, timezone
 from evolve import try_adopt
 from policy import PolicyRule, glob_to_regexp
 
-MODEL = os.environ.get("AEGIS_MODEL", "claude-3-5-haiku-20241022")
+MODEL = os.environ.get("AEGIS_MODEL", "claude-haiku-4-5-20251001")
 API_KEY = os.environ.get("ANTHROPIC_API_KEY", "").strip()
 WORKSPACE_ID = os.environ.get("ANTHROPIC_WORKSPACE_ID", "").strip()
 
