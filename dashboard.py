@@ -244,15 +244,7 @@ footer{color:var(--muted);font-size:.78rem;text-align:center;padding:0 1rem 1.5r
 <section class="tabpane active" id="pane-intercept">
 <div class="cols2">
 <div>
-<div class="card"><h3>🏭 Production task <span class="muted" style="font-weight:400;font-size:.8rem">weekly report — real files, real SQLite, real gate</span></h3>
-<p><button class="btn big" onclick="runTask(false)">▶ Run weekly-report task</button>
-<button class="btn big" onclick="runTask(true)">🧠 Run with AI planner</button>
-<button class="btn" onclick="resetSandbox()">↺ reset demo data</button>
-<button class="btn" onclick="showTab('pane-intercept')">→ approval queue</button>
-<span class="muted" id="tasksummary" style="font-size:.85rem;margin-left:.6rem"></span></p>
-<div id="taskline"></div>
-<div id="taskproof" class="muted" style="font-size:.85rem;margin-top:.5rem"></div>
-</div>
+
 
 <div class="card">
 <h3>⚔️ Attack console <span class="muted" style="font-weight:400;font-size:.8rem">red-team the same system — tickets land in the approval queue →</span></h3>
@@ -283,6 +275,13 @@ footer{color:var(--muted);font-size:.78rem;text-align:center;padding:0 1rem 1.5r
 </div>
 </section>
 <section class="tabpane" id="pane-ai">
+<div class="card"><h3>🏭 Production task <span class="muted" style="font-weight:400;font-size:.8rem">weekly report — real files, real SQLite, real gate</span></h3>
+<p><button class="btn big" onclick="runTask(false)">▶ Run weekly-report task</button>
+<button class="btn big" onclick="runTask(true)">🧠 Run with AI planner</button>
+<span class="muted" id="tasksummary" style="font-size:.85rem;margin-left:.6rem"></span></p>
+<div id="taskline"></div>
+<div id="taskproof" class="muted" style="font-size:.85rem;margin-top:.5rem"></div>
+</div>
 <div class="card"><h3>🤖 Agent debrief <span class="muted" style="font-weight:400;font-size:.8rem">AI summary of the run — from live audit events</span></h3><div id="debrief"><span class="muted">— run the task in 🛡️ Interception; the debrief will appear here automatically —</span></div></div>
 <div class="card"><h3>🤖 Ask Aegis <span class="muted" style="font-weight:400;font-size:.8rem">AI analyst over the audit log — read-only; proposals still pass the fixed evaluator</span></h3>
 <div style="margin-bottom:.6rem">
