@@ -47,6 +47,10 @@ class Gate:
         if self.audit:
             self.audit.append(event)
 
+    def log_event(self, event: dict) -> None:
+        """Public: let the agent record post-approval tool executions."""
+        self._log(event)
+
     def check(self, req: AccessRequest) -> GateResult:
         decision = evaluate(self.policy, req)
 

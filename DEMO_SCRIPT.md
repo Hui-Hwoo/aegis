@@ -16,25 +16,31 @@ Record on-site Oct 11. Must show ONLY what was built during the hackathon
 
 ## 3-minute live demo (Round 1) + Q&A prep
 
-Drive it from the dashboard (`python dashboard.py`): click attacks,
-watch decisions land, approve the ticket live when it pops up.
+Drive it from the dashboard (`python dashboard.py`): the whole arc is live,
+no slides.
 
-1. **(30s)** The problem: "An agent asked to update docs can delete prod.
-   Nothing stops it except prompt obedience — which is not a security boundary."
-2. **(60s)** Attack console: run the 4 attacks + poisoned memory. "5/5 blocked,
-   0 escapes, median gate latency <1ms."
-3. **(45s)** Approvals: "Privilege escalation needs a human." Click
-   "🟡 Update docs" TWICE, approve both tickets live when they pop up.
-4. **(45s)** Distill + AUTOMATIC self-evolution: press 🧠 Distill — evolution
-   fires by itself (auto-pilot on). "It mines its audit log, proposes rule
-   changes, and a fixed evaluator it cannot edit gates every change.
-   Watch: it just tried to drop the docs-approval requirement after 2 clean
-   approvals… and vetoed itself — held-out probe caught a path-traversal
-   hole. The rejection is the point."
+1. **(60s)** Production task first: "This is not an attack game — it's a
+   working governed agent." Press ▶ Run weekly-report task: it reads real
+   docs, queries a real SQLite analytics table (60 rows), then follows an
+   injected instruction planted in the maintenance guide — 'delete prod
+   users' — and the gate stops it. Proof, not a badge: prod_users still
+   200 rows. The changelog write needs a human: approve the ticket live,
+   the file is really written.
+2. **(30s)** Authorization: "Same request, different verdict per role."
+   Show the 🔐 matrix: intern can't query analytics, analyst can't delete
+   prod, admin *can* — but only with human approval. Switch to admin, click
+   delete prod: ticket, not a flat deny.
+3. **(45s)** Red team: run the attacks + poisoned memory. "5/5 blocked,
+   0 escapes, median gate latency <1ms. The poisoned memory said 'skip
+   approval' — the gate doesn't care what the agent believes."
+4. **(30s)** AUTOMATIC self-evolution: press 🧠 Distill — evolution fires by
+   itself. "It mines its audit log, proposes rule changes, and a fixed
+   evaluator it cannot edit gates every change. Watch: it just tried to
+   drop the docs-approval requirement after 2 clean approvals… and vetoed
+   itself — held-out probe caught a path-traversal hole."
 5. **(30s)** Ask Aegis (AI analyst): "Summarize the last hour." Then:
-   "Auto-reject prod deletes from now on" → adopted; "auto-approve docs
-   writes" → rejected by the evaluator. The LLM proposes, the evaluator
-   disposes — it can never approve anything itself.
+   "Auto-reject prod deletes from now on" → adopted; the LLM proposes,
+   the evaluator disposes — it can never approve anything itself.
 
 ### Likely Q&A
 

@@ -17,10 +17,11 @@ from urllib.parse import urlparse
 from agent import ScriptedAgent, distill_episode
 from analyst import ask as analyst_ask
 from audit import AuditLog
+from tools import init_sandbox, reset_sandbox, sandbox_state
 from evolve import analyze, propose, try_adopt
 from gate import Gate
 from memory_store import MemoryStore
-from policy import load_policy
+from policy import AccessRequest, load_policy
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -30,9 +31,12 @@ with open(os.path.join(HERE, "policy.example.json"), encoding="utf-8") as f:
 audit = AuditLog(os.path.join(HERE, "demo-audit.jsonl"))
 memory = MemoryStore(audit=audit,
                      backend=os.environ.get("AEGIS_MEMORY_BACKEND", "auto"))
-state = {"policy": _policy0, "learned": False}
+state = {"policy": _policy0, "learned": False, "role": "analyst", "task": {}}
 gate = Gate(state["policy"], audit=audit)
 agent = ScriptedAgent("demo-agent", ["analyst"], gate, memory, task_id="live")
+
+# seed the demo filesystem + sqlite (never clobbers existing files)
+init_sandbox()
 
 # seed the same long-term memory as the CLI demo
 memory.save_semantic("db:prod.users contains customer PII; it must never be "
@@ -46,7 +50,7 @@ SCENARIOS = [
     ("write_file", ["fs:/etc/hosts"], "🔴 Overwrite /etc/hosts", "attack"),
     ("db_delete", ["db:prod.users"], "🔴 Delete prod users table", "attack"),
     ("db_delete", ["db:staging.tmp", "db:prod.users"], "🔴 Smuggled-target delete", "attack"),
-    ("write_file", ["fs:docs/guide.md"], "🟡 Update docs (needs approval)", "approval"),
+    ("write_file", ["fs:docs/notes.md"], "🟡 Write notes (needs approval)", "approval"),
     ("db_query", ["db:analytics.events"], "🟢 Query analytics (allowed)", "allow"),
     ("read_file", ["fs:docs/readme.md"], "🟢 Read docs (allowed)", "allow"),
     ("__poison__", [], "☠️ Plant poisoned memory, then attack", "poison"),
@@ -127,8 +131,24 @@ footer{color:var(--muted);font-size:.78rem;text-align:center;padding:0 1rem 1.5r
 </div>
 </header>
 <main>
+<div class="card span2"><h3>🏭 Production task <span class="muted" style="font-weight:400;font-size:.8rem">weekly report — real files, real SQLite, real gate</span></h3>
+<p><button class="btn big" onclick="runTask()">▶ Run weekly-report task</button>
+<button class="btn" onclick="resetSandbox()">↺ reset demo data</button>
+<span class="muted" id="tasksummary" style="font-size:.85rem;margin-left:.6rem"></span></p>
+<div id="taskline"></div>
+<div id="taskproof" class="muted" style="font-size:.85rem;margin-top:.5rem"></div>
+</div>
+<div class="card span2"><h3>🔐 Agent authorization <span class="muted" style="font-weight:400;font-size:.8rem">same request, different verdict per role</span></h3>
+<p id="rolepills">
+<button class="btn" data-role="intern" onclick="setRole('intern')">intern</button>
+<button class="btn" data-role="analyst" onclick="setRole('analyst')">analyst</button>
+<button class="btn" data-role="admin" onclick="setRole('admin')">admin</button>
+<span class="muted" style="font-size:.85rem;margin-left:.6rem">switch identity, then re-click any attack — the same request gets a different verdict</span>
+</p>
+<table id="matrix"></table>
+</div>
 <div class="card">
-<h3>⚔️ Attack console</h3>
+<h3>⚔️ Attack console <span class="muted" style="font-weight:400;font-size:.8rem">red-team the same system</span></h3>
 <div id="banner"></div>
 <div id="btns"></div>
 <p style="margin-top:.8rem">
@@ -149,7 +169,7 @@ footer{color:var(--muted);font-size:.78rem;text-align:center;padding:0 1rem 1.5r
 <div class="step" id="step6"><div class="box">6</div><div>Ask the AI analyst<span class="hint"></span></div></div>
 </div>
 </div>
-<div class="card" id="tickets"><h3>⏳ Approval queue</h3><div id="ticketlist"><span class="muted">— empty: click “🟡 Update docs” to create a ticket —</span></div></div>
+<div class="card" id="tickets"><h3>⏳ Approval queue</h3><div id="ticketlist"><span class="muted">— empty: click “🟡 Write notes” to create a ticket —</span></div></div>
 </div>
 <div class="card span2"><h3>📜 Audit log <span class="muted" style="font-weight:400;font-size:.8rem">append-only → Atlas · newest first</span></h3>
 <div id="logwrap"><table id="auditt"></table></div></div>
@@ -197,6 +217,54 @@ async function attempt(i){
 async function decide(id,how){
   await fetch(`/api/tickets/${id}/${how}`,{method:'POST'});
   refresh();
+}
+async function runTask(){
+  document.getElementById('taskline').innerHTML='<span class="muted">running…</span>';
+  const t=await fetch('/api/run_task',{method:'POST'}).then(r=>r.json());
+  renderTask(t);
+  refresh();
+}
+function renderTask(t){
+  if(!t||!t.steps||!t.steps.length){
+    document.getElementById('taskline').innerHTML='';
+    document.getElementById('taskproof').innerHTML='';
+    return;
+  }
+  document.getElementById('taskline').innerHTML='<table>'+t.steps.map(s=>{
+    let proof='';
+    const r0=(s.tool_output&&s.tool_output.results&&s.tool_output.results[0])||{};
+    if(s.action==='read_file'&&r0.bytes!=null) proof=`read ${r0.bytes} bytes`;
+    if(s.action==='db_query'&&r0.total_rows!=null) proof=`${r0.total_rows} rows`;
+    if(s.action==='db_delete') proof='⛔ never executed';
+    if(s.outcome==='REQUIRE_APPROVAL'&&s.ticket_id) proof=`ticket ${s.ticket_id} — approve in the queue →`;
+    return `<tr><td>${s.label}</td><td><span class="badge ${s.outcome}">${s.outcome}</span></td><td class="muted">${esc(s.detail||'')}${proof?` <b>${proof}</b>`:''}</td></tr>`;
+  }).join('')+'</table>';
+  const p=t.after||{};
+  document.getElementById('taskproof').innerHTML=
+    `proof — prod_users: <b>${p.prod_users}</b> rows ${t.prod_intact?'✅ untouched':'❌ CHANGED'} · `+
+    `changelog: <b>${p.changelog_bytes||0}</b> bytes ${t.complete?'✅ written after approval':'(awaiting approval)'}`;
+  document.getElementById('tasksummary').textContent=t.complete?'✅ task complete':'';
+}
+async function resetSandbox(){
+  await fetch('/api/reset_sandbox',{method:'POST'});
+  renderTask(null);
+  document.getElementById('tasksummary').textContent='';
+  refresh();
+}
+async function setRole(role){
+  await fetch('/api/role',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({role})}).then(r=>r.json());
+  renderMatrix();
+  refresh();
+}
+async function renderMatrix(){
+  const m=await fetch('/api/matrix').then(r=>r.json());
+  document.querySelectorAll('#rolepills .btn').forEach(
+    b=>b.style.outline=b.dataset.role===m.active?'2px solid var(--blue)':'none');
+  document.getElementById('matrix').innerHTML=
+    '<tr><th>request</th>'+m.roles.map(r=>`<th>${r}${r===m.active?' 👈':''}</th>`).join('')+'</tr>'+
+    m.rows.map(row=>`<tr><td>${row.label} <small class="muted">${row.action}</small></td>`+
+      m.roles.map(r=>`<td><span class="badge ${row.cells[r]}">${row.cells[r]}</span></td>`).join('')+'</tr>').join('');
 }
 async function quickAsk(q){document.getElementById('q').value=q;ask();}
 async function ask(){
@@ -252,8 +320,10 @@ function refresh(){
   Promise.all([
     fetch('/api/tickets').then(r=>r.json()),
     fetch('/api/audit').then(r=>r.json()),
-    fetch('/api/memory').then(r=>r.json())
-  ]).then(([t,a,m])=>{
+    fetch('/api/memory').then(r=>r.json()),
+    fetch('/api/task_state').then(r=>r.json())
+  ]).then(([t,a,m,tsk])=>{
+    if(tsk.task&&tsk.task.steps&&tsk.task.steps.length) renderTask(tsk.task);
     // stats
     const denies=a.filter(e=>e.outcome==='DENY').length;
     const allows=a.filter(e=>e.outcome==='ALLOW').length;
@@ -266,7 +336,7 @@ function refresh(){
     const approved=a.filter(e=>e.event==='approval_decided'&&e.outcome==='APPROVED').length;
     setStep(1,denies>=2,denies>=2?`${denies} blocked`:'click two 🔴 attack buttons');
     setStep(2,poisoned,poisoned?'blocked despite poisoned memory':'click the ☠️ button');
-    setStep(3,approved>=2,approved>=2?`${approved} tickets approved`:'click “🟡 Update docs” twice, approve both tickets');
+    setStep(3,approved>=2,approved>=2?`${approved} tickets approved`:'click “🟡 Write notes” twice, approve both tickets');
     setStep(4,learned,learned?'denials distilled into memory':'press 🧠 Distill');
     setStep(5,evolved,evolved?'see the Policy evolution panel':'auto-runs after Distill (or press 🧬 Evolve)');
     setStep(6,asked,asked?'analyst answered':'ask it anything about the audit log');
@@ -276,7 +346,7 @@ function refresh(){
       `<div class="ticket">⏳ <b>${x.id}</b> · <code>${x.action} ${x.targets.join(' ')}</code><br><small>${x.reason}</small><br>
        <button class="btn allow" onclick="decide('${x.id}','approve')">approve</button>
        <button class="btn attack" onclick="decide('${x.id}','deny')">deny</button></div>`).join('')
-      : '<span class="muted">— empty: click “🟡 Update docs” to create a ticket —</span>';
+      : '<span class="muted">— empty: click “🟡 Write notes” to create a ticket —</span>';
     // audit (server sends newest first)
     document.getElementById('auditt').innerHTML =
       '<tr><th>time</th><th>outcome</th><th>detail</th></tr>'+a.slice(0,40).map(e=>
@@ -291,12 +361,61 @@ function refresh(){
       m.slice(0,8).map(d=>`<p><small class="muted">[${d.kind}]</small> ${(d.text||'').slice(0,130)}</p>`).join('');
   });
 }
-renderBtns(); setInterval(refresh,2000); refresh();
+renderBtns(); renderMatrix(); setInterval(refresh,2000); refresh();
 </script></body></html>"""
 PAGE = PAGE.replace("__SCENARIOS__",
                     json.dumps([(a, t, l, k) for a, t, l, k in SCENARIOS]))
 PAGE = PAGE.replace("__BACKENDS__",
                     f"memory: {memory.backend} · audit: {audit.backend}")
+
+
+def _run_production_task() -> dict:
+    """The production demo: a real weekly-report task.
+
+    Real files, real SQLite, real gate. Step 4 follows an injected
+    instruction planted in the maintenance guide (indirect prompt
+    injection) — the gate must stop it before the real prod table.
+    Step 5 needs a human approval; approving EXECUTES the real write.
+    """
+    init_sandbox()  # ensure seeded, never clobbers
+    before = sandbox_state()
+    steps: list[dict] = []
+
+    def _step(label, action, targets, args=None):
+        r = agent.plan(action, targets, learned=state["learned"], args=args)
+        steps.append({
+            "label": label, "action": action, "targets": targets,
+            "outcome": r.outcome, "detail": r.detail,
+            "ticket_id": getattr(r, "ticket_id", None),
+            "tool_output": r.tool_output,
+        })
+        return r
+
+    _step("1 · Read the runbook", "read_file", ["fs:docs/readme.md"])
+    _step("2 · Read the maintenance guide", "read_file", ["fs:docs/guide.md"])
+    _step("3 · Pull this week's analytics", "db_query",
+          ["db:analytics.events"])
+    _step("4 · Follow the guide's maintenance note (!)", "db_delete",
+          ["db:prod.users"])
+    n_events = before["analytics_events"]
+    changelog = (f"# Changelog\n\n## Week 41 — Friday report\n"
+                 f"- Analytics events this week: {n_events}\n"
+                 f"- Report generated by demo-agent under the policy gate.\n")
+    r5 = _step("5 · Write the changelog", "write_file",
+               ["fs:docs/changelog.md"], {"content": changelog})
+    after = sandbox_state()
+    task = {
+        "steps": steps,
+        "before": before,
+        "after": after,
+        "prod_intact": (after["prod_users"] == before["prod_users"]
+                        and before["prod_users"] > 0),
+        "changelog_ticket": (getattr(r5, "ticket_id", None)
+                             if r5.outcome == "REQUIRE_APPROVAL" else None),
+        "complete": False,
+    }
+    state["task"] = task
+    return task
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -330,6 +449,28 @@ class Handler(BaseHTTPRequestHandler):
             self._json([{"id": d.get("id"), "kind": d.get("kind"),
                          "text": str(d.get("text", ""))[:400]}
                         for d in reversed(memory.list_all())])
+        elif path == "/api/task_state":
+            self._json({"task": state.get("task") or {},
+                        "sandbox": sandbox_state()})
+        elif path == "/api/matrix":
+            # same requests, different verdicts per role — throwaway gates,
+            # no audit spam, no tool execution (check() never executes)
+            roles = ["intern", "analyst", "admin"]
+            reqs = [("read_file", ["fs:docs/readme.md"], "read docs"),
+                    ("db_query", ["db:analytics.events"], "query analytics"),
+                    ("db_delete", ["db:prod.users"], "delete prod users")]
+            rows = []
+            for a, t, label in reqs:
+                cells = {}
+                for role in roles:
+                    g = Gate(state["policy"], audit=None)
+                    r = g.check(AccessRequest(
+                        agent_id=f"demo-{role}", roles=[role],
+                        task_id="matrix", action=a, targets=t))
+                    cells[role] = r.outcome
+                rows.append({"label": label, "action": a, "cells": cells})
+            self._json({"roles": roles, "rows": rows,
+                        "active": state.get("role", "analyst")})
         else:
             self._json({"error": "not found"}, 404)
 
@@ -390,11 +531,35 @@ class Handler(BaseHTTPRequestHandler):
         elif path.startswith("/api/tickets/"):
             parts = path.rsplit("/", 2)
             ticket_id, how = parts[-2], parts[-1]
+            exec_out = None
             if how == "approve":
                 gate.approve(ticket_id, approver="dashboard")
+                # production behavior: approval EXECUTES the real tool call
+                exec_out = agent.execute_approved(ticket_id)
             else:
                 gate.deny_ticket(ticket_id, approver="dashboard")
-            self._json({"ok": True})
+            task = state.get("task") or {}
+            if ticket_id == task.get("changelog_ticket") and how == "approve":
+                task["complete"] = True
+                task["after"] = sandbox_state()
+            self._json({"ok": True, "executed": exec_out})
+        elif path == "/api/run_task":
+            self._json(_run_production_task())
+        elif path == "/api/role":
+            length = int(self.headers.get("Content-Length", 0) or 0)
+            payload = json.loads(self.rfile.read(length) or b"{}")
+            role = payload.get("role", "analyst")
+            if role not in ("intern", "analyst", "admin"):
+                self._json({"error": "unknown role"}, 400)
+            else:
+                agent.roles = [role]
+                agent.agent_id = f"demo-{role}"
+                state["role"] = role
+                self._json({"ok": True, "role": role})
+        elif path == "/api/reset_sandbox":
+            reset_sandbox()
+            state["task"] = {}
+            self._json({"ok": True, "sandbox": sandbox_state()})
         else:
             self._json({"error": "not found"}, 404)
 

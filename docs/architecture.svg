@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 880" font-family="system-ui, -apple-system, sans-serif">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8b949e"/>
+    </marker>
+    <marker id="arrB" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#58a6ff"/>
+    </marker>
+    <style>
+      .box { fill: #161b22; stroke: #30363d; stroke-width: 1.5; rx: 10; }
+      .t { fill: #e6edf3; font-size: 15px; font-weight: 700; }
+      .b { fill: #8b949e; font-size: 12.5px; }
+      .title { fill: #e6edf3; font-size: 22px; font-weight: 800; }
+      .arrow { stroke: #8b949e; stroke-width: 2; }
+      .darrow { stroke: #58a6ff; stroke-width: 2; stroke-dasharray: 7 5; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1200" height="880" fill="#0d1117"/>
+  <text x="600" y="42" text-anchor="middle" class="title">🛡️ Aegis — governed-memory harness</text>
+
+  <!-- operator bar -->
+  <rect x="60" y="62" width="1080" height="52" rx="10" class="box" style="stroke:#8957e5"/>
+  <text x="600" y="86" text-anchor="middle" class="t">OPERATOR</text>
+  <text x="600" y="106" text-anchor="middle" class="b">approvals · Ask Aegis (read-only LLM analyst) · role assignment</text>
+
+  <!-- agent / gate / tools -->
+  <rect x="60" y="160" width="180" height="112" rx="10" class="box"/>
+  <text x="150" y="192" text-anchor="middle" class="t">AGENT</text>
+  <text x="150" y="216" text-anchor="middle" class="b">roles: intern /</text>
+  <text x="150" y="236" text-anchor="middle" class="b">analyst / admin</text>
+  <text x="150" y="256" text-anchor="middle" class="b">any framework</text>
+
+  <rect x="320" y="150" width="280" height="132" rx="10" class="box" style="stroke:#58a6ff;stroke-width:2.5"/>
+  <text x="460" y="182" text-anchor="middle" class="t">POLICY GATE</text>
+  <text x="460" y="206" text-anchor="middle" class="b">ordered rules · deny-wins</text>
+  <text x="460" y="226" text-anchor="middle" class="b">default-deny · resource globs</text>
+  <text x="460" y="246" text-anchor="middle" class="b">role-based · every call checked</text>
+
+  <rect x="680" y="160" width="240" height="112" rx="10" class="box" style="stroke:#3fb950"/>
+  <text x="800" y="192" text-anchor="middle" class="t">TOOLS (real)</text>
+  <text x="800" y="216" text-anchor="middle" class="b">sandbox fs · SQLite</text>
+  <text x="800" y="236" text-anchor="middle" class="b">traversal-guarded</text>
+  <text x="800" y="256" text-anchor="middle" class="b">DENY ⇒ never executes</text>
+
+  <line x1="240" y1="216" x2="314" y2="216" class="arrow" marker-end="url(#arr)"/>
+  <line x1="600" y1="216" x2="674" y2="216" class="arrow" marker-end="url(#arr)"/>
+
+  <!-- outcomes -->
+  <line x1="395" y1="282" x2="395" y2="336" class="arrow" marker-end="url(#arr)"/>
+  <line x1="600" y1="282" x2="600" y2="336" class="arrow" marker-end="url(#arr)"/>
+  <line x1="805" y1="282" x2="805" y2="336" class="arrow" marker-end="url(#arr)"/>
+
+  <rect x="320" y="340" width="150" height="76" rx="10" class="box" style="stroke:#f85149"/>
+  <text x="395" y="368" text-anchor="middle" class="t">⛔ DENY</text>
+  <text x="395" y="392" text-anchor="middle" class="b">blocked + reason,</text>
+  <text x="395" y="408" text-anchor="middle" class="b">audited</text>
+
+  <rect x="500" y="340" width="200" height="76" rx="10" class="box" style="stroke:#d29922"/>
+  <text x="600" y="368" text-anchor="middle" class="t">🎫 APPROVAL</text>
+  <text x="600" y="392" text-anchor="middle" class="b">ticket → human decides →</text>
+  <text x="600" y="408" text-anchor="middle" class="b">approve EXECUTES for real</text>
+
+  <rect x="730" y="340" width="150" height="76" rx="10" class="box" style="stroke:#3fb950"/>
+  <text x="805" y="368" text-anchor="middle" class="t">✅ ALLOW</text>
+  <text x="805" y="392" text-anchor="middle" class="b">tool executes,</text>
+  <text x="805" y="408" text-anchor="middle" class="b">output audited</text>
+
+  <path d="M 960 114 V 378 H 706" fill="none" class="darrow" marker-end="url(#arrB)"/>
+  <text x="1000" y="250" text-anchor="middle" class="b">approve / deny</text>
+
+  <!-- audit bar -->
+  <rect x="60" y="456" width="1080" height="66" rx="10" class="box" style="stroke:#8957e5;stroke-width:2"/>
+  <text x="600" y="484" text-anchor="middle" class="t">AUDIT LOG → MongoDB Atlas</text>
+  <text x="600" y="506" text-anchor="middle" class="b">append-only · identity-bound — every decision · ticket · tool execution · memory op</text>
+  <line x1="395" y1="416" x2="395" y2="450" class="arrow" marker-end="url(#arr)"/>
+  <line x1="600" y1="416" x2="600" y2="450" class="arrow" marker-end="url(#arr)"/>
+  <line x1="805" y1="416" x2="805" y2="450" class="arrow" marker-end="url(#arr)"/>
+
+  <!-- loops -->
+  <line x1="220" y1="522" x2="220" y2="566" class="arrow" marker-end="url(#arr)"/>
+  <line x1="600" y1="522" x2="600" y2="566" class="arrow" marker-end="url(#arr)"/>
+  <line x1="980" y1="522" x2="980" y2="566" class="arrow" marker-end="url(#arr)"/>
+
+  <rect x="60" y="570" width="320" height="128" rx="10" class="box" style="stroke:#1f6feb"/>
+  <text x="220" y="598" text-anchor="middle" class="t">🔁 RSI LOOP</text>
+  <text x="220" y="622" text-anchor="middle" class="b">distill episode → episodic /</text>
+  <text x="220" y="642" text-anchor="middle" class="b">procedural memory</text>
+  <text x="220" y="666" text-anchor="middle" class="b">denials 5 → 0 · ↩ writes memory</text>
+
+  <rect x="440" y="570" width="320" height="128" rx="10" class="box" style="stroke:#1f6feb"/>
+  <text x="600" y="598" text-anchor="middle" class="t">🧬 SELF-EVOLVE</text>
+  <text x="600" y="622" text-anchor="middle" class="b">mine audit → propose rule change →</text>
+  <text x="600" y="642" text-anchor="middle" class="b">FIXED EVALUATOR (uneditable) →</text>
+  <text x="600" y="666" text-anchor="middle" class="b">adopt / rollback · ↩ rewrites gate</text>
+
+  <rect x="820" y="570" width="320" height="128" rx="10" class="box" style="stroke:#1f6feb"/>
+  <text x="980" y="598" text-anchor="middle" class="t">🤖 ASK AEGIS</text>
+  <text x="980" y="622" text-anchor="middle" class="b">LLM analyst over the audit log</text>
+  <text x="980" y="642" text-anchor="middle" class="b">proposals → fixed evaluator</text>
+  <text x="980" y="666" text-anchor="middle" class="b">read-only · never approves</text>
+
+  <!-- memory bar -->
+  <line x1="220" y1="698" x2="220" y2="736" class="arrow" marker-end="url(#arr)"/>
+  <rect x="60" y="740" width="1080" height="66" rx="10" class="box" style="stroke:#bc8cff;stroke-width:2"/>
+  <text x="600" y="768" text-anchor="middle" class="t">GOVERNED MEMORY → Atlas</text>
+  <text x="600" y="790" text-anchor="middle" class="b">semantic / episodic / taxonomic / procedural · every read &amp; write policy-checked · agent consults before acting</text>
+
+  <text x="600" y="846" text-anchor="middle" class="b">MongoDB Atlas is the data + memory layer: audit collection · memories collection · (Agent Engine memory when provisioned)</text>
+</svg>

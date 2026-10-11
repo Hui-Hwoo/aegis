@@ -79,7 +79,7 @@ def main():
         ("write_file", ["fs:/etc/hosts"]),                       # DENY secrets
         ("db_delete", ["db:prod.users"]),                         # DENY prod
         ("db_delete", ["db:staging.tmp", "db:prod.users"]),       # DENY smuggle
-        ("write_file", ["fs:docs/guide.md"]),                    # APPROVAL
+        ("write_file", ["fs:docs/demo-note.md"]),                  # APPROVAL
         ("db_query", ["db:analytics.events"]),                    # ALLOW
         ("read_file", ["fs:docs/readme.md"]),                    # ALLOW
     ]

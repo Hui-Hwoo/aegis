@@ -16,11 +16,7 @@ from dataclasses import dataclass, field
 from gate import Gate
 from memory_store import MemoryStore
 from policy import AccessRequest
-
-
-# ---- simulated tool execution (the point is the gate, not the tools) ----
-def execute_tool(action: str, targets: list[str], args: dict | None = None):
-    return {"ok": True, "action": action, "targets": targets, "args": args or {}}
+from tools import execute_tool  # real tools: the gate stands before these
 
 
 @dataclass
@@ -30,6 +26,7 @@ class AttemptResult:
     outcome: str  # ALLOW | DENY | REQUIRE_APPROVAL | WOULD_DENY | APPROVED | SKIPPED_LEARNED
     detail: str = ""
     executed: bool = False
+    tool_output: dict | None = None  # real tool result, when executed
 
 
 class ScriptedAgent:
@@ -43,6 +40,23 @@ class ScriptedAgent:
         self.memory = memory
         self.task_id = task_id
         self.history: list[AttemptResult] = []
+        # ticket_id -> (action, targets, args): calls awaiting approval.
+        # Approving a ticket EXECUTES the real tool call (production behavior).
+        self.pending_calls: dict[str, tuple] = {}
+
+    def execute_approved(self, ticket_id: str) -> dict:
+        """Run the real tool call behind an approved ticket."""
+        call = self.pending_calls.pop(ticket_id, None)
+        if call is None:
+            return {"ok": False, "error": "no pending call for ticket"}
+        action, targets, args = call
+        out = execute_tool(action, targets, args)
+        self.gate.log_event({
+            "event": "tool_executed", "ticket_id": ticket_id,
+            "agent_id": self.agent_id, "action": action,
+            "targets": targets, "ok": out.get("ok"),
+        })
+        return out
 
     def attempt(self, action: str, targets: list[str],
                 args: dict | None = None) -> AttemptResult:
@@ -51,16 +65,20 @@ class ScriptedAgent:
             task_id=self.task_id, action=action, targets=targets)
         res = self.gate.check(req)
         if res.outcome == "ALLOW":
-            execute_tool(action, targets, args)
-            out = AttemptResult(action, targets, "ALLOW", res.decision.reason, True)
+            tool_out = execute_tool(action, targets, args)
+            out = AttemptResult(action, targets, "ALLOW", res.decision.reason,
+                                True, tool_output=tool_out)
         elif res.outcome == "REQUIRE_APPROVAL":
             out = AttemptResult(action, targets, "REQUIRE_APPROVAL",
                                 f"ticket {res.ticket_id}: {res.decision.reason}")
             out.ticket_id = res.ticket_id  # type: ignore[attr-defined]
+            # remember the real call so approval executes it
+            self.pending_calls[res.ticket_id] = (action, targets, args)
         elif res.outcome == "WOULD_DENY":
-            execute_tool(action, targets, args)
+            tool_out = execute_tool(action, targets, args)
             out = AttemptResult(action, targets, "WOULD_DENY",
-                                res.decision.reason, True)
+                                res.decision.reason, True,
+                                tool_output=tool_out)
         else:
             out = AttemptResult(action, targets, "DENY", res.decision.reason)
         self.history.append(out)
@@ -91,7 +109,8 @@ class ScriptedAgent:
                 approvals.append(h)
         return denials, approvals
 
-    def plan(self, action: str, targets: list[str], learned: bool):
+    def plan(self, action: str, targets: list[str], learned: bool,
+             args: dict | None = None):
         """Naive plan: attempt directly.
 
         Learned plan: check memory first —
@@ -108,10 +127,10 @@ class ScriptedAgent:
                 self.history.append(out)
                 return out
             if approvals:
-                out = self.attempt(action, targets)  # -> REQUIRE_APPROVAL ticket
+                out = self.attempt(action, targets, args)  # -> REQUIRE_APPROVAL ticket
                 out.detail = "proactive approval request (learned): " + out.detail
                 return out
-        return self.attempt(action, targets)
+        return self.attempt(action, targets, args)
 
 
 def distill_episode(memory: MemoryStore, agent: ScriptedAgent, episode: int) -> int:

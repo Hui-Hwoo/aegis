@@ -12,9 +12,10 @@ Aegis is a governed-memory harness for AI agents on MongoDB Atlas. Problem:
 production agents fail on governance, not intelligence — an agent asked to
 update docs can delete a prod database, stopped by nothing but prompt
 obedience. Aegis puts every tool call through a policy gate (deny-wins,
-default-deny, resource scoping, human approvals), governs memory itself across
+default-deny, resource scoping, role-based access, human approvals), governs memory itself across
 all four Agent Engine memory types, and writes an identity-bound audit log to
-Atlas. It learns two ways: enforcement history distills into
+Atlas. Tools execute for real against a sandboxed filesystem and SQLite —
+a blocked prod delete provably leaves all 200 rows intact. It learns two ways: enforcement history distills into
 episodic/procedural memory (denials 5→0 across episodes), and the harness
 automatically rewrites its own rules after each episode — each mutation gated
 by a fixed evaluator it cannot edit (one adopted, one rejected after a
