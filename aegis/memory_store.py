@@ -158,26 +158,41 @@ class _AgentEngineBackend:
 
 
 class MemoryStore:
-    """Governed memory. Every read/write is an audited event."""
+    """Governed memory. Every read/write is an audited event.
+
+    Backend selection is *probed*, not assumed: if the hosted Agent Engine
+    backend is unreachable or not provisioned for this project
+    (e.g. AGENT_NOT_DEPLOYED), we degrade to the deterministic in-memory
+    store instead of crashing mid-demo. Offline-capable by design.
+    """
 
     def __init__(self, audit=None, backend: str = "auto"):
         self.audit = audit
         if backend == "auto":
-            try:
-                if not os.environ.get("AGENTIC_MEMORY_SERVICE_ACCOUNT_TOKEN"):
-                    raise RuntimeError("no service-account token in env")
-                self._be = _AgentEngineBackend()
-                self.backend = "agent-engine"
-            except Exception as e:
-                print(f"[memory] Agent Engine SDK unavailable ({e}); "
-                      "using in-memory fallback")
-                self._be = _InMemoryBackend()
-                self.backend = "memory"
+            be, name = self._try_agent_engine()
+            if be is None:
+                be, name = _InMemoryBackend(), "memory"
+            self._be, self.backend = be, name
         elif backend == "memory":
             self._be = _InMemoryBackend()
             self.backend = "memory"
         else:
             raise ValueError(f"unknown backend {backend}")
+
+    def _try_agent_engine(self):
+        """Returns (backend, 'agent-engine') or (None, None)."""
+        try:
+            if not os.environ.get("AGENTIC_MEMORY_SERVICE_ACCOUNT_TOKEN"):
+                raise RuntimeError("no service-account token in env")
+            be = _AgentEngineBackend()
+            # live probe: construction alone never touches the network
+            be.search_semantic("connectivity probe", top_k=1)
+            print("[memory] Agent Engine backend live")
+            return be, "agent-engine"
+        except Exception as e:
+            print(f"[memory] hosted backend unavailable ({type(e).__name__}: "
+                  f"{str(e)[:120]}); using in-memory fallback")
+            return None, None
 
     def _log(self, op: str, kind: str, detail: str = "") -> None:
         if self.audit:
