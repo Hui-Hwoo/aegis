@@ -45,8 +45,7 @@ Runs the 4-act scripted demo and prints the scoreboard:
 block rate, approval flow, RSI episode-1→2 denial counts, audit size.
 
 ```bash
-python -m dashboard   # live demo UI at http://localhost:8000
-# pip install fastapi uvicorn   (only needed for the dashboard)
+python dashboard.py   # live demo UI at http://localhost:8000 (zero dependencies)
 ```
 
 ## Going live on Atlas (at the event)
