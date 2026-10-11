@@ -16,9 +16,9 @@ default-deny, resource scoping, human approvals), governs memory itself across
 all four Agent Engine memory types, and writes an identity-bound audit log to
 Atlas. It learns two ways: enforcement history distills into
 episodic/procedural memory (denials 5→0 across episodes), and the harness
-rewrites its own rules — each mutation gated by a fixed evaluator it cannot
-edit (one adopted, one rejected after a held-out probe caught a
-path-traversal hole). Live: 5/5 attacks blocked, 0 escapes, including a
+automatically rewrites its own rules after each episode — each mutation gated
+by a fixed evaluator it cannot edit (one adopted, one rejected after a
+held-out probe caught a path-traversal hole). Live: 5/5 attacks blocked, 0 escapes, including a
 poisoned-memory attack. An AI analyst ("Ask Aegis") answers natural-language
 questions over the audit log and turns operator intent ("auto-reject prod
 deletes from now on") into policy proposals — still gated by the fixed
@@ -66,13 +66,13 @@ Recursive self-improvement, two loops:
   (block rate, approvals, self-evolution) are all verifiable against this
   collection.
 - **Atlas Agent Engine:** integrated via the official
-  `agent-engine-sdk-memory` Python SDK. Our `MemoryStore` wraps it to expose
-  the four memory types — semantic (facts), episodic (events), taxonomic
-  (terms), procedural (how-tos) — behind one governed interface: every
-  read/write is policy-checked and audited. When the hosted project backend
-  is not provisioned (`AGENT_NOT_DEPLOYED`), it degrades to a deterministic
-  in-memory store with an identical interface, so the harness is
-  offline-capable and swaps back with zero code changes.
+  `agent-engine-sdk-memory` Python SDK. Our `MemoryStore` exposes the four
+  memory types — semantic (facts), episodic (events), taxonomic (terms),
+  procedural (how-tos) — behind one governed interface: every read/write is
+  policy-checked and audited. Backend chain (probed, not assumed): hosted
+  Agent Engine memory when provisioned → **direct Atlas MongoDB** (the four
+  types live in the `memories` collection, no Agent Engine deployment
+  needed) → deterministic in-memory store. Offline-capable, Atlas-primary.
 - **Architecture alignment:** our custom policy engine maps 1:1 onto Agent
   Engine's `GuardrailPolicyEngine` protocol (registered policy engines
   evaluated at runtime tool-call boundaries) — Aegis is a reference

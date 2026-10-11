@@ -74,15 +74,22 @@ launder itself through the analyst).
 ```bash
 pip install -r requirements.txt   # pin agent-engine-sdk-memory==<exact>
 
-# 1. Memory -> real Agent Engine (org service account)
+# 1. Memory -> Atlas (first available wins; no code changes)
+#    a) Agent Engine hosted memory (org service account):
 export AGENTIC_MEMORY_SERVICE_ACCOUNT_TOKEN=<token>
 export AGENTIC_MEMORY_PROJECT_ID=<project-id>
-#    (falls back to deterministic in-memory store without these)
-
-# 2. Audit -> Atlas collection instead of JSONL
+#    b) Direct Atlas MongoDB (no Agent Engine deployment needed) —
+#       the 4 memory types live in the `memories` collection:
 export MONGODB_URI="mongodb+srv://<user>:<pw>@<cluster>/"
 export MONGODB_DB=aegis
+
+# 2. Audit -> Atlas `audit` collection instead of JSONL (same env vars)
 ```
+
+Backend chain (probed, not assumed): Agent Engine → direct Atlas MongoDB →
+deterministic in-memory. The dashboard header shows the live backends, e.g.
+`memory: mongo · audit: atlas`. Open Atlas Data Explorer side-by-side during
+the demo: every decision and memory write lands in the sandbox in real time.
 
 No code changes needed — backends are selected by environment.
 
@@ -93,7 +100,8 @@ No code changes needed — backends are selected by environment.
 | `policy.py` | Pure policy engine (port of the battle-tested Cerberus engine): ordered rules, glob resources, deny-wins, default-deny |
 | `gate.py` | Enforcement point: ALLOW / DENY / REQUIRE_APPROVAL (+ `observe` dry-run mode), approval tickets |
 | `audit.py` | Append-only audit log → Atlas collection or local JSONL |
-| `memory_store.py` | Agent Engine memory SDK wrapper with in-memory fallback; all reads/writes audited |
+| `memory_store.py` | Agent Engine memory SDK wrapper + **direct Atlas MongoDB backend**
+  (`memories` collection, 4 memory types) + in-memory fallback; all reads/writes audited |
 | `agent.py` | Scripted adversarial agent + `distill_episode` (the RSI loop) |
 | `evolve.py` | Policy self-evolution: mine audit → propose mutations → fixed-evaluator gating → adopt/rollback |
 | `evaluator.py` | **Fixed** evaluation suite (attacks / legit / held-out probes) — the harness cannot edit this |

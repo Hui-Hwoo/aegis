@@ -117,7 +117,7 @@ code{font-family:ui-monospace,monospace;font-size:.8rem}
 footer{color:var(--muted);font-size:.78rem;text-align:center;padding:0 1rem 1.5rem}
 </style></head><body>
 <header>
-<h1>🛡️ Aegis</h1><span class="sub">governed memory harness · live demo</span>
+<h1>🛡️ Aegis</h1><span class="sub">governed memory harness · live demo<br>__BACKENDS__</span>
 <div class="stats">
 <div class="stat"><b id="st-block" style="color:var(--red)">0</b><span>blocked</span></div>
 <div class="stat"><b id="st-allow" style="color:var(--green)">0</b><span>allowed</span></div>
@@ -134,6 +134,7 @@ footer{color:var(--muted);font-size:.78rem;text-align:center;padding:0 1rem 1.5r
 <p style="margin-top:.8rem">
 <button class="btn big" onclick="learn()">🧠 Distill episode → RSI</button>
 <button class="btn big" onclick="evolve()">🧬 Evolve policy (self-rewriting rules)</button>
+<label style="font-size:.82rem;color:var(--muted);margin-left:.6rem"><input type="checkbox" id="autopilot" checked> auto-evolve after distill</label>
 </p>
 </div>
 <div>
@@ -142,9 +143,9 @@ footer{color:var(--muted);font-size:.78rem;text-align:center;padding:0 1rem 1.5r
 <div id="steps">
 <div class="step" id="step1"><div class="box">1</div><div>Block 2 attacks<span class="hint"></span></div></div>
 <div class="step" id="step2"><div class="box">2</div><div>Poisoned-memory attack still blocked<span class="hint"></span></div></div>
-<div class="step" id="step3"><div class="box">3</div><div>Trigger an approval → approve it<span class="hint"></span></div></div>
+<div class="step" id="step3"><div class="box">3</div><div>Trigger approvals → approve both<span class="hint"></span></div></div>
 <div class="step" id="step4"><div class="box">4</div><div>Distill the episode (RSI)<span class="hint"></span></div></div>
-<div class="step" id="step5"><div class="box">5</div><div>Evolve the policy — watch it reject its own bad idea<span class="hint"></span></div></div>
+<div class="step" id="step5"><div class="box">5</div><div>Auto-evolution vetoes its own bad idea<span class="hint"></span></div></div>
 <div class="step" id="step6"><div class="box">6</div><div>Ask the AI analyst<span class="hint"></span></div></div>
 </div>
 </div>
@@ -218,13 +219,18 @@ async function learn(){
   const r=await fetch('/api/learn',{method:'POST'}).then(r=>r.json());
   learned=true;
   showBanner('SKIPPED_LEARNED',`distilled ${r.memories} memories — attacks now consult memory first`);
+  if(document.getElementById('autopilot').checked){ await doEvolve(); }
   refresh();
 }
 async function evolve(){
+  await doEvolve();
+  refresh();
+}
+async function doEvolve(){
   const r=await fetch('/api/evolve',{method:'POST'}).then(r=>r.json());
   evolved=true;
   document.getElementById('evol').innerHTML = r.mutations.length ?
-    '<p class="muted" style="font-size:.8rem">fixed evaluator — the harness cannot edit it</p>'+r.mutations.map(m=>{
+    '<p class="muted" style="font-size:.8rem">fixed evaluator — the harness cannot edit it · triggered automatically after distill</p>'+r.mutations.map(m=>{
       let why='';
       if(!m.adopted){
         if(m.after.probe_pass_rate<m.before.probe_pass_rate) why='held-out probe failed';
@@ -257,12 +263,12 @@ function refresh(){
     document.getElementById('st-events').textContent=a.length;
     document.getElementById('st-mem').textContent=m.length;
     // checklist
-    const approved=a.some(e=>e.event==='approval_decided'&&e.outcome==='APPROVED');
+    const approved=a.filter(e=>e.event==='approval_decided'&&e.outcome==='APPROVED').length;
     setStep(1,denies>=2,denies>=2?`${denies} blocked`:'click two 🔴 attack buttons');
     setStep(2,poisoned,poisoned?'blocked despite poisoned memory':'click the ☠️ button');
-    setStep(3,approved,approved?'human approved the ticket':'click “🟡 Update docs”, then approve the ticket');
+    setStep(3,approved>=2,approved>=2?`${approved} tickets approved`:'click “🟡 Update docs” twice, approve both tickets');
     setStep(4,learned,learned?'denials distilled into memory':'press 🧠 Distill');
-    setStep(5,evolved,evolved?'see the Policy evolution panel':'press 🧬 Evolve policy');
+    setStep(5,evolved,evolved?'see the Policy evolution panel':'auto-runs after Distill (or press 🧬 Evolve)');
     setStep(6,asked,asked?'analyst answered':'ask it anything about the audit log');
     // tickets
     document.getElementById('tickets').classList.toggle('hot',t.length>0);
@@ -289,6 +295,8 @@ renderBtns(); setInterval(refresh,2000); refresh();
 </script></body></html>"""
 PAGE = PAGE.replace("__SCENARIOS__",
                     json.dumps([(a, t, l, k) for a, t, l, k in SCENARIOS]))
+PAGE = PAGE.replace("__BACKENDS__",
+                    f"memory: {memory.backend} · audit: {audit.backend}")
 
 
 class Handler(BaseHTTPRequestHandler):

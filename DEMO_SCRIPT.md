@@ -23,10 +23,14 @@ watch decisions land, approve the ticket live when it pops up.
    Nothing stops it except prompt obedience — which is not a security boundary."
 2. **(60s)** Attack console: run the 4 attacks + poisoned memory. "5/5 blocked,
    0 escapes, median gate latency <1ms."
-3. **(45s)** Approvals: "Privilege escalation needs a human. One click here."
-4. **(45s)** Self-evolution: "It mines its audit log, proposes rule changes,
-   and a fixed evaluator it cannot edit gates every change. It adopted one,
-   rejected one — the rejection is the point."
+3. **(45s)** Approvals: "Privilege escalation needs a human." Click
+   "🟡 Update docs" TWICE, approve both tickets live when they pop up.
+4. **(45s)** Distill + AUTOMATIC self-evolution: press 🧠 Distill — evolution
+   fires by itself (auto-pilot on). "It mines its audit log, proposes rule
+   changes, and a fixed evaluator it cannot edit gates every change.
+   Watch: it just tried to drop the docs-approval requirement after 2 clean
+   approvals… and vetoed itself — held-out probe caught a path-traversal
+   hole. The rejection is the point."
 5. **(30s)** Ask Aegis (AI analyst): "Summarize the last hour." Then:
    "Auto-reject prod deletes from now on" → adopted; "auto-approve docs
    writes" → rejected by the evaluator. The LLM proposes, the evaluator
