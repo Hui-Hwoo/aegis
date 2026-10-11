@@ -327,6 +327,7 @@ footer{color:var(--muted);font-size:.78rem;text-align:center;padding:0 1rem 1.5r
 const SCEN=__SCENARIOS__;
 let learned=false, evolved=false, poisoned=false, asked=false;
 function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function md(s){return esc(s).replace(/^## (.*)$/gm,'<b>$1</b>').replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\\n/g,'<br>')}
 const GROUPS=[["attack","Attacks"],["approval","Needs human approval"],["allow","Legitimate"],["poison","Adversarial memory"]];
 function renderBtns(){
   document.getElementById('btns').innerHTML = GROUPS.map(([k,label])=>
@@ -396,7 +397,7 @@ async function debrief(){
   box.innerHTML='<span class="muted">✍️ agent writing debrief from the audit logs…</span>';
   try{
     const r=await fetch('/api/task_debrief',{method:'POST'}).then(r=>r.json());
-    box.innerHTML=`<div style="border:1px solid var(--border2);border-radius:8px;padding:.6rem .8rem;margin-top:.6rem;background:var(--card)"><b>🤖 Agent debrief</b> <small class="muted">· ${esc(r.backend)} · read ${r.n_events} audit events live from ${esc(r.audit_source)}</small><br><span style="font-size:.88rem">${esc(r.summary).replace(/^## (.*)$/gm,'<b>$1</b>').replace(/\\n/g,'<br>')}</span></div>`;
+    box.innerHTML=`<div class="muted" style="font-size:.76rem;margin-bottom:.5rem">· ${esc(r.backend)} · read ${r.n_events} audit events live from ${esc(r.audit_source)}</div><div style="font-size:.9rem;line-height:1.65">${md(r.summary)}</div>`;
   }catch(e){ box.innerHTML='<span class="muted">debrief failed</span>'; }
   refresh();
 }
@@ -458,7 +459,7 @@ async function ask(){
     asked=true;
     document.getElementById('askbackend').textContent='· answered by '+r.backend;
     document.getElementById('aout').innerHTML=
-      `<div class="muted" style="white-space:pre-wrap;font-size:.9rem">${esc(r.answer)}</div>`+
+      `<div style="white-space:pre-wrap;font-size:.9rem;line-height:1.65">${md(r.answer)}</div>`+
       (r.mutation?`<div class="mut ${r.mutation.adopted?'ok':'no'}" style="margin-top:.6rem"><b>${r.mutation.adopted?'✅ policy updated':'❌ proposal rejected by evaluator'}</b> — ${esc(r.mutation.description)}<br><small>block ${r.mutation.before.block_rate}→${r.mutation.after.block_rate} · probes ${r.mutation.before.probe_pass_rate}→${r.mutation.after.probe_pass_rate} · legit ${r.mutation.before.legit_ok_rate}→${r.mutation.after.legit_ok_rate}</small></div>`:'');
   }catch(e){
     document.getElementById('aout').innerHTML='<span class="muted">request failed: '+esc(String(e))+'</span>';
