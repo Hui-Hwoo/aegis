@@ -153,6 +153,7 @@ footer{color:var(--muted);font-size:.78rem;text-align:center;padding:0 1rem 1.5r
 .flowcard{max-width:1060px;margin:0 auto;padding:1.1rem 1.2rem 0}
 .flowcard .card{margin-bottom:.9rem}
 .flowsvg{width:100%;max-width:720px;height:auto;display:block;margin:0 auto}
+.evosvg{max-width:520px}
 .flowsvg .fbox{fill:var(--card);stroke:var(--border2);stroke-width:1.5}
 .flowsvg .fbox.gate{stroke:var(--fg);stroke-width:2.5}
 .flowsvg .fbox.deny{fill:var(--pill);stroke:var(--pill)}
@@ -304,15 +305,44 @@ footer{color:var(--muted);font-size:.78rem;text-align:center;padding:0 1rem 1.5r
 </section>
 <section class="tabpane" id="pane-evo">
 <div class="card"><h3>🧬 How self-evolution works</h3>
-<div class="evoflow">
-<div class="efstep"><b>audit log</b><small>every verdict</small></div><div class="efarr">→</div>
-<div class="efstep"><b>distill</b><small>episode → memory</small></div><div class="efarr">→</div>
-<div class="efstep"><b>memory</b><small>governed</small></div><div class="efarr">→</div>
-<div class="efstep"><b>propose</b><small>policy mutation</small></div><div class="efarr">→</div>
-<div class="efstep"><b>fixed evaluator</b><small>frozen · veto power</small></div><div class="efarr">→</div>
-<div class="efstep"><b>adopt / rollback</b><small>policy updated</small></div>
+<div style="display:flex;justify-content:center">
+<svg viewBox="0 0 520 380" class="flowsvg evosvg" role="img" aria-label="Self-evolution loop: audit log, distill, memory, propose, frozen evaluator, adopt or rollback, back to audit log">
+<circle cx="260" cy="190" r="140" fill="none" stroke="var(--border2)" stroke-width="1" stroke-dasharray="5 6" opacity="0.7"/>
+<text x="260" y="184" text-anchor="middle" class="flabel" style="font-size:13px">↺ SELF-EVOLVING</text>
+<text x="260" y="204" text-anchor="middle" class="flabel" style="font-size:13px">LOOP</text>
+<path d="M319.2 63.1 A140 140 0 0 1 340.3 75.3" class="farr"/>
+<polygon points="340.3,75.3 330.6,73.4 335.2,66.9" class="farrh"/>
+<path d="M399.5 177.8 A140 140 0 0 1 399.5 202.2" class="farr"/>
+<polygon points="399.5,202.2 396.3,192.9 404.2,193.6" class="farrh"/>
+<path d="M340.3 304.7 A140 140 0 0 1 319.2 316.9" class="farr"/>
+<polygon points="319.2,316.9 325.6,309.5 329.0,316.7" class="farrh"/>
+<path d="M200.8 316.9 A140 140 0 0 1 179.7 304.7" class="farr"/>
+<polygon points="179.7,304.7 189.4,306.6 184.8,313.1" class="farrh"/>
+<path d="M120.5 202.2 A140 140 0 0 1 120.5 177.8" class="farr"/>
+<polygon points="120.5,177.8 123.7,187.1 115.8,186.4" class="farrh"/>
+<path d="M179.7 75.3 A140 140 0 0 1 200.8 63.1" class="farr"/>
+<polygon points="200.8,63.1 194.4,70.5 191.0,63.3" class="farrh"/>
+<rect x="202.0" y="28.0" width="116" height="44" rx="8" class="fbox"/>
+<text x="260.0" y="47.0" text-anchor="middle" class="ftext" style="font-size:12px">audit log</text>
+<text x="260.0" y="63.0" text-anchor="middle" class="fsub" style="font-size:9.5px">every verdict</text>
+<rect x="323.2" y="98.0" width="116" height="44" rx="8" class="fbox"/>
+<text x="381.2" y="117.0" text-anchor="middle" class="ftext" style="font-size:12px">distill</text>
+<text x="381.2" y="133.0" text-anchor="middle" class="fsub" style="font-size:9.5px">episode → memory</text>
+<rect x="323.2" y="238.0" width="116" height="44" rx="8" class="fbox"/>
+<text x="381.2" y="257.0" text-anchor="middle" class="ftext" style="font-size:12px">memory</text>
+<text x="381.2" y="273.0" text-anchor="middle" class="fsub" style="font-size:9.5px">governed</text>
+<rect x="202.0" y="308.0" width="116" height="44" rx="8" class="fbox"/>
+<text x="260.0" y="327.0" text-anchor="middle" class="ftext" style="font-size:12px">propose</text>
+<text x="260.0" y="343.0" text-anchor="middle" class="fsub" style="font-size:9.5px">policy mutation</text>
+<rect x="80.8" y="238.0" width="116" height="44" rx="8" class="fbox"/>
+<text x="138.8" y="257.0" text-anchor="middle" class="ftext" style="font-size:12px">frozen evaluator</text>
+<text x="138.8" y="273.0" text-anchor="middle" class="fsub" style="font-size:9.5px">veto power</text>
+<rect x="80.8" y="98.0" width="116" height="44" rx="8" class="fbox"/>
+<text x="138.8" y="117.0" text-anchor="middle" class="ftext" style="font-size:12px">adopt / rollback</text>
+<text x="138.8" y="133.0" text-anchor="middle" class="fsub" style="font-size:9.5px">policy goes live</text>
+</svg>
 </div>
-<div class="evoloop"><span class="loopicon">↺</span><span><b>loop closes:</b> the updated policy goes live in the gate — the next request is judged by the evolved policy, and its verdict feeds the next cycle</span></div>
+
 </div>
 <div class="card"><h3>🧬 Self-evolution controls</h3>
 <p>
@@ -484,20 +514,26 @@ async function evolve(){
   refresh();
 }
 async function doEvolve(){
-  const r=await fetch('/api/evolve',{method:'POST'}).then(r=>r.json());
+  const box=document.getElementById('evol');
+  box.innerHTML='<span class="muted">\u23f3 fixed evaluator vetting candidate mutations\u2026</span>';
+  let r;
+  try{ r=await fetch('/api/evolve',{method:'POST'}).then(r=>r.json()); }
+  catch(e){ box.innerHTML='<span class="muted">evolve failed: '+esc(String(e))+'</span>'; return; }
   evolved=true;
-  document.getElementById('evol').innerHTML = r.mutations.length ?
-    `<p class="muted" style="font-size:.8rem">fixed evaluator <b>sha256:${r.evaluator_sha}</b> — frozen at startup, the harness cannot edit it · triggered automatically after distill</p>`+r.mutations.map(m=>{
+  if(!r.mutations || !r.mutations.length){
+    box.innerHTML='<span class="muted">\u2014 no mutations to vet yet.<br>To see the loop work: click "🟡 Write notes" twice, approve both tickets, press "🧠 Distill", then Evolve \u2014 the evaluator will vet a real policy relaxation.</span>';
+    return;
+  }
+  box.innerHTML=`<p class="muted" style="font-size:.8rem">fixed evaluator <b>sha256:${r.evaluator_sha}</b> \u2014 frozen at startup, the harness cannot edit it</p>`+
+    r.mutations.map(m=>{
       let why='';
       if(!m.adopted){
         if(m.after.probe_pass_rate<m.before.probe_pass_rate) why='held-out probe failed';
         else if(m.after.block_rate<m.before.block_rate) why='block rate dropped';
         else why='legit regression';
       }
-      return `<div class="mut ${m.adopted?'ok':'no'}"><b>${m.adopted?'✅ ADOPTED':'❌ REJECTED + rolled back'}</b> — ${m.description}<br><small>block ${m.before.block_rate}→${m.after.block_rate} · probes ${m.before.probe_pass_rate}→${m.after.probe_pass_rate} · legit ${m.before.legit_ok_rate}→${m.after.legit_ok_rate}${why?` · <i>why: ${why}</i>`:''}</small></div>`;
-    }).join('')
-    : '<p class="muted">no mutations proposed — needs ≥2 approvals or ≥3 denials on one rule first</p>';
-  refresh();
+      return `<div class="mut ${m.adopted?'ok':'no'}"><b>${m.adopted?'\u2705 ADOPTED':'\u274c REJECTED + rolled back'}</b> \u2014 ${m.description}<br><small>block ${m.before.block_rate}\u2192${m.after.block_rate} \u00b7 probes ${m.before.probe_pass_rate}\u2192${m.after.probe_pass_rate} \u00b7 legit ${m.before.legit_ok_rate}\u2192${m.after.legit_ok_rate}${why?` \u00b7 <i>why: ${why}</i>`:''}</small></div>`;
+    }).join('');
 }
 function setStep(n,done,hint){
   const el=document.getElementById('step'+n);
